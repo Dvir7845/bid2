@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ChangeProfilePage"
+    android:orientation="vertical"
+    android:background="#121212">
+
+    <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/ivPfp"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_marginTop="60dp"
+        android:layout_gravity="center"
+        android:src="@drawable/default_pfp"
+        app:civ_border_color="#393939"
+        app:civ_border_width="3dp" />
+
+    <Button
+        android:id="@+id/btnChangeImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Change image"
+        android:textColor="@color/black"
+        android:layout_marginTop="10dp"
+        android:layout_marginHorizontal="110dp"
+        android:backgroundTint="#4FD1B3"/>
+
+    <TextView
+        android:id="@+id/tvChangeText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="40dp"
+        android:layout_marginLeft="8dp"
+        android:text="Change Username"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:textSize="25sp"/>
+
+    <EditText
+        android:id="@+id/etChangeUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_corner_view"
+        android:layout_marginHorizontal="6dp"
+        android:ems="10"
+        android:inputType="text"
+        android:minHeight="48dp"
+        android:text="Change Username"
+        android:textColor="@color/black"
+        android:textSize="20dp" />
+
+
+    <Button
+        android:id="@+id/btnChangeProfile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Save Changes"
+        android:textColor="@color/black"
+        android:backgroundTint="#00b88f"
+        android:layout_marginTop="200dp"
+        android:layout_marginBottom="10dp"
+        />
+
+    <View
+        android:id="@+id/view2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"/>
+
+    <Button
+        android:id="@+id/btnLogOut"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:backgroundTint="#d14f70"
+        android:text="Log Out"
+        android:textColor="@color/black"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_weight="0"
+        android:gravity="center"
+        android:background="#272727"
+        >
+
+        <ImageButton
+            android:id="@+id/ibMeetings"
+            android:layout_marginHorizontal="8dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:drawable/ic_menu_my_calendar" />
+
+        <ImageButton
+            android:id="@+id/ibHomeButton"
+            android:layout_marginHorizontal="8dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:drawable/radiobutton_off_background"
+            />
+
+        <ImageButton
+            android:id="@+id/ibFriendsList"
+            android:layout_marginHorizontal="8dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:drawable/ic_menu_view" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activities.MainPage"
+    android:orientation="vertical"
+    android:background="#121212">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingVertical="5dp"
+        android:background="#272727">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/ivPfp"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:src="@drawable/default_pfp"
+            app:civ_border_color="#393939"
+            app:civ_border_width="3dp"
+            android:clickable="true"/>
+
+        <TextView
+            android:id="@+id/tvUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:gravity="left"
+            android:layout_marginLeft="8dp"
+            android:textSize="18dp"
+            android:text="Username"
+            android:textColor="@color/white"
+            android:background="@android:color/transparent"/>
+
+        <ImageButton
+            android:id="@+id/IBNewMeeting"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_weight="0"
+
+            android:background="@android:drawable/ic_menu_add" />
+
+        <ImageButton
+            android:id="@+id/IBNotifications"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_weight="0"
+            android:layout_gravity="center"
+            android:background="@android:drawable/ic_popup_reminder"
+            android:layout_marginRight="8dp"/>
+
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/TvMeetingText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:layout_weight="0"
+        android:textSize="25sp"
+        android:paddingStart="10dp"
+        android:text="Meetings:" />
+
+
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginHorizontal="10dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/TVMeetingsPrivate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="6dp"
+                android:text="Private Friends Meetings:"
+                android:textSize="18sp"
+                android:textColor="@color/white"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/RVMeetingsPrivate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/TVMeetingsFriends"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="6dp"
+                android:text="Public Friends Meetings:"
+                android:textSize="18sp"
+                android:textColor="@color/white"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/RVMeetingsFriends"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/TVMeetingsPublic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="6dp"
+                android:text="All Public Meetings:"
+                android:textSize="18sp"
+                android:textColor="@color/white"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/RVMeetingsPublic"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_weight="0"
+        android:gravity="center"
+        android:background="#272727"
+        >
+
+        <ImageButton
+            android:id="@+id/IBMeetings"
+            android:layout_marginHorizontal="8dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:drawable/ic_menu_my_calendar" />
+
+        <ImageButton
+            android:id="@+id/IBHomeButton"
+            android:layout_marginHorizontal="8dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:drawable/radiobutton_off_background"
+            />
+
+        <ImageButton
+            android:id="@+id/IBFriendsList"
+            android:layout_marginHorizontal="8dp"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@android:drawable/ic_menu_view" />
+
+    </LinearLayout>
+
+
+</androidx.appcompat.widget.LinearLayoutCompat>

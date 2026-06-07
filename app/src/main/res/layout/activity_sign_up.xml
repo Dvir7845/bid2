@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".Activities.SignUpActivity"
+    android:background="@drawable/main_screen_photo"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvSignupText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:text="Signup"
+        android:textSize="80dp"
+        android:textColor="@color/white"
+        android:fontFamily="sans-serif-condensed-medium"/>
+
+    <TextView
+        android:id="@+id/tvNotes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:layout_marginStart="50dp"
+        android:text=""
+        android:textColor="#FF0000"/>
+    <EditText
+        android:id="@+id/etEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+
+        android:background="@drawable/rounded_corner_view"
+        android:ems="10"
+        android:hint=" Enter Email"
+        android:textColor="@color/black"
+        android:inputType="text"
+        android:minHeight="48dp" />
+
+    <EditText
+        android:id="@+id/etUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/rounded_corner_view"
+        android:ems="10"
+        android:hint=" Enter username"
+        android:textColor="@color/black"
+        android:inputType="text"
+        android:minHeight="48dp" />
+
+    <EditText
+        android:id="@+id/etPhoneNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/rounded_corner_view"
+        android:ems="10"
+        android:hint=" Enter phone number"
+        android:textColor="@color/black"
+        android:inputType="text"
+        android:minHeight="48dp" />
+
+    <EditText
+        android:id="@+id/etPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/rounded_corner_view"
+        android:ems="10"
+        android:hint=" Enter password"
+        android:textColor="@color/black"
+        android:inputType="textPassword"
+        android:minHeight="48dp" />
+
+    <EditText
+        android:id="@+id/etPasswordConfirm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/rounded_corner_view"
+        android:ems="10"
+        android:hint=" Enter password again"
+        android:textColor="@color/black"
+        android:inputType="textPassword"
+        android:minHeight="48dp" />
+
+    <Button
+        android:id="@+id/btnSignup"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginTop="60dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sign up"
+        android:textSize="20dp"
+        android:textColor="@color/white"
+        android:backgroundTint="#67421E"
+        android:layout_gravity="center"/>
+
+
+
+</LinearLayout>

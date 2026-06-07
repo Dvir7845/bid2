@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activities.SignInActivity"
+    android:orientation="vertical"
+    android:background="@drawable/main_screen_photo"
+    >
+
+    <TextView
+        android:id="@+id/tvAppName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="2Bid"
+        android:textSize="80sp"
+        android:layout_gravity="center"
+        android:textColor="@color/white"
+        android:fontFamily="sans-serif-condensed-medium"/>
+
+    <TextView
+        android:id="@+id/tvNotes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="80dp"
+        android:layout_marginStart="50dp"
+        android:text=""
+        android:textColor="#FF0000"/>
+
+    <EditText
+        android:id="@+id/etEmail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/rounded_corner_view"
+        android:ems="10"
+        android:hint=" Enter email"
+        android:textColor="@color/black"
+        android:inputType="text"
+        android:minHeight="48dp" />
+
+    <EditText
+        android:id="@+id/etPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="15dp"
+        android:background="@drawable/rounded_corner_view"
+        android:ems="10"
+        android:hint=" Enter password"
+        android:textColor="@color/black"
+        android:inputType="textPassword"
+        android:minHeight="48dp" />
+
+    <Button
+        android:id="@+id/btnSignIn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="40dp"
+        android:layout_marginTop="4dp"
+        android:text="Sign in"
+        android:textSize="20dp"
+        android:textColor="@color/white"
+        android:backgroundTint="#67421E"
+        android:layout_gravity="center"/>
+
+    <Button
+        android:id="@+id/btnForgotPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Forgot Password?"
+        android:background="@android:color/transparent"
+        android:textColor="@color/white"
+        android:textSize="18dp"
+
+        android:layout_gravity="center"
+        android:gravity="top"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/white"
+            android:gravity="right"
+            android:text="Have no account?" />
+
+        <Button
+            android:id="@+id/btnSignup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="left"
+            android:fontFamily="sans-serif-condensed-medium"
+            android:textSize="20dp"
+            android:textColor="@color/white"
+            android:background="@android:color/transparent"
+            android:text="Sign up here!" />
+
+
+
+
+    </LinearLayout>
+</LinearLayout>

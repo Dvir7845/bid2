@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1018446116034",
+    "project_id": "tobid-3032c",
+    "storage_bucket": "tobid-3032c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1018446116034:android:8554041f042d311abc375b",
+        "android_client_info": {
+          "package_name": "com.example.tobid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqGCMZw1AGWm1p3MBVGAcYgRqpgorSe2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
