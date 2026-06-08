@@ -1,19 +1,23 @@
 package com.example.tobid.Activities;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class MainPage extends AppCompatActivity implements View.OnClickListener {
     // Firebase instances
@@ -21,10 +25,8 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     private DatabaseReference myRef;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
-
-    private ImageButton ibNewBid, ibBidHistory, ibHomeButton, ibNotifications;
-    private TextView tvSearchBar;
-    private Spinner spCategory;
+    private TextView tvUsername;
+    private ImageButton BTNnewSale;
 
 
     // Method to reload user data when the app is resumed
@@ -32,6 +34,8 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     public void onStart() {
         super.onStart();
         FirebaseUser currentUser = mAuth.getCurrentUser();
+
+
         if (currentUser != null) {
             currentUser.reload();
         }
@@ -42,40 +46,56 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
+        BTNnewSale = findViewById(R.id.BTNnewSale);
+        BTNnewSale.setOnClickListener(this);
 
+         tvUsername = findViewById(R.id.tvUsername);
         // Initialize Firebase and Auth instances
         database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
-        // Initialize buttons
-        ibNewBid = findViewById(R.id.ibNewBid);
-        ibBidHistory = findViewById(R.id.ibBidHistory);
-        ibHomeButton = findViewById(R.id.ibHomeButton);
-        ibNotifications = findViewById(R.id.ibNotifications);
+        if (user != null) {
+            fetchAndDisplayUsername();
+        }
 
-        spCategory = findViewById(R.id.spCategory);
-        tvSearchBar = findViewById(R.id.tvSearchBar);
+
+
     }
+
+
+    private void fetchAndDisplayUsername() {
+        String currentUserId = user.getUid();
+        myRef = database.getReference("Users").child(currentUserId);
+
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String username = snapshot.child("username").getValue(String.class);
+                    if (username != null) {
+                        tvUsername.setText(username);
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Failed to read username", error.toException());
+            }
+        });
+    }
+
+
 
 
     @Override
     public void onClick(View v) {
-        if (v == ibHomeButton) {
-            return; // Already in home
-        }
-        else if (v == ibBidHistory) {
-            Intent i = new Intent(this, SalesHistoryActivity.class);
-            startActivity(i);
-        }
-        else if (v == ibNotifications) {
-            Intent i = new Intent(this, NotificationsActivity.class);
-            startActivity(i);
-        }
-        else if (v == ibNewBid) {
+        if(v == BTNnewSale){
             Intent i = new Intent(this, CreateSaleActivity.class);
             startActivity(i);
         }
 
     }
+
+
 }

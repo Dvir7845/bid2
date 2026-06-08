@@ -134,7 +134,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                                 startActivity(new Intent(SignUpActivity.this, SignInActivity.class));
                             } else {
                                 // Account creation failed
-                                displayMessage("Couldn't create account. Is your email correct?");
+                                displayMessage("Couldn't create account. Is your email correct? or maybe your password is too short?(6 characters)");
                                 Log.w(TAG, "createUserWithEmail:failure", task.getException());
                                 Toast.makeText(SignUpActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                             }

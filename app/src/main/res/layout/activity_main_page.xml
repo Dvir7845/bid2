@@ -38,13 +38,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
-                android:gravity="left"
-                android:layout_marginTop="15dp"
                 android:layout_marginLeft="8dp"
-                android:textSize="18dp"
+                android:layout_marginTop="15dp"
+                android:background="@android:color/transparent"
+                android:gravity="left"
                 android:text="Username"
                 android:textColor="@color/white"
-                android:background="@android:color/transparent"/>
+                android:textSize="18dp" />
 
             <TextView
                 android:id="@+id/tvOngoingSalesText"
@@ -56,15 +56,17 @@
 
         </LinearLayout>
 
+
         <ImageButton
-            android:id="@+id/ibNewBid"
+            android:id="@+id/BTNnewSale"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="center"
-            android:layout_weight="0"
             android:layout_marginRight="5dp"
 
-            android:background="@android:drawable/ic_menu_add" />
+            android:layout_weight="0"
+            android:background="@android:drawable/ic_menu_add"
+            android:visibility="visible" />
 
     </LinearLayout>
 
@@ -160,7 +162,7 @@
         android:background="#272727">
 
         <ImageButton
-            android:id="@+id/ibBidHistory"
+            android:id="@+id/ibMeetings"
             android:layout_marginHorizontal="8dp"
             android:layout_width="50dp"
             android:layout_height="50dp"
