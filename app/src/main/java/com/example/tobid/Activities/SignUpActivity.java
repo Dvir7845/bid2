@@ -4,6 +4,7 @@ import static android.content.ContentValues.TAG;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,8 +13,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.tobid.DataModels.Notification;
 import com.example.tobid.DataModels.User;
 import com.example.tobid.R;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -21,6 +26,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+
+import org.jspecify.annotations.NonNull;
+
+import java.util.Calendar;
 
 /**
  * The SignUpPage activity allows users to register for the HangOut app.
@@ -100,37 +109,37 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                 displayMessage("Passwords must match.");
                 return;
             }
-//
-//            // Create a new account using Firebase Authentication
-//            mAuth.createUserWithEmailAndPassword(email, password)
-//                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-//                        @Override
-//                        public void onComplete(@NonNull Task<AuthResult> task) {
-//                            if (task.isSuccessful()) {
-//                                // Account creation successful
-//                                FirebaseUser user = mAuth.getCurrentUser();
-//                                User newUser = createUser(user); // Create a new user profile
-//
-//                                // Create a welcome notification for the user
-//                                String notificationText = "Welcome to 2Bid! Start setting up your profile by exploring new biddings.";
-//                                Notification signUpNotification = new Notification(
-//                                        "2Bid-" + Calendar.getInstance().getTimeInMillis(),
-//                                        "2Bid", "2Bid", newUser.getImg(), notificationText);
-//
-//                                // Save the notification in the database
-//                                myRef = database.getReference("/Users/" + mAuth.getUid() + "/notifications/" + signUpNotification.getId());
-//                                myRef.setValue(signUpNotification);
-//
-//                                // Navigate to the sign-in page
-//                                startActivity(new Intent(SignUpPage.this, SignInPage.class));
-//                            } else {
-//                                // Account creation failed
-//                                displayMessage("Couldn't create account. Is your email correct?");
-//                                Log.w(TAG, "createUserWithEmail:failure", task.getException());
-//                                Toast.makeText(SignUpPage.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
-//                            }
-//                        }
-//                    });
+
+            // Create a new account using Firebase Authentication
+            mAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if (task.isSuccessful()) {
+                                // Account creation successful
+                                FirebaseUser user = mAuth.getCurrentUser();
+                                User newUser = createUser(user); // Create a new user profile
+
+                                // Create a welcome notification for the user
+                                String notificationText = "Welcome to 2Bid! Start setting up your profile by exploring new biddings.";
+                                Notification signUpNotification = new Notification(
+                                        "2Bid-" + Calendar.getInstance().getTimeInMillis(),
+                                        "2Bid", "2Bid", newUser.getImg(), notificationText);
+
+                                // Save the notification in the database
+                                myRef = database.getReference("/Users/" + mAuth.getUid() + "/notifications/" + signUpNotification.getId());
+                                myRef.setValue(signUpNotification);
+
+                                // Navigate to the sign-in page
+                                startActivity(new Intent(SignUpActivity.this, SignInActivity.class));
+                            } else {
+                                // Account creation failed
+                                displayMessage("Couldn't create account. Is your email correct?");
+                                Log.w(TAG, "createUserWithEmail:failure", task.getException());
+                                Toast.makeText(SignUpActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
         }
     }
 

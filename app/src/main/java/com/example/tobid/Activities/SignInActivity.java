@@ -49,11 +49,11 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         // Check if the user is already logged in
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
-//            currentUser.reload(); // Reload the user to ensure their session is active
-//
-//            // Redirect to the main page
-//            Intent i = new Intent(this, MainPage.class);
-//            startActivity(i);
+            currentUser.reload(); // Reload the user to ensure their session is active
+
+            // Redirect to the main page
+            Intent i = new Intent(this, MainPage.class);
+            startActivity(i);
         }
     }
 
