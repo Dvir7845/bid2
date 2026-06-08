@@ -56,10 +56,8 @@
 
         </LinearLayout>
 
-
-
         <ImageButton
-            android:id="@+id/IBNewMeeting"
+            android:id="@+id/ibNewBid"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="center"
@@ -162,7 +160,7 @@
         android:background="#272727">
 
         <ImageButton
-            android:id="@+id/ibMeetings"
+            android:id="@+id/ibBidHistory"
             android:layout_marginHorizontal="8dp"
             android:layout_width="50dp"
             android:layout_height="50dp"
