@@ -3,9 +3,11 @@ package com.example.tobid.Activities;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.example.tobid.R;
@@ -24,6 +26,7 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private TextView tvUsername;
+    private ImageButton BTNnewSale;
 
 
     // Method to reload user data when the app is resumed
@@ -43,6 +46,8 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
+        BTNnewSale = findViewById(R.id.BTNnewSale);
+        BTNnewSale.setOnClickListener(this);
 
          tvUsername = findViewById(R.id.tvUsername);
         // Initialize Firebase and Auth instances
@@ -85,7 +90,11 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
 
     @Override
     public void onClick(View v) {
-        
+        if(v == BTNnewSale){
+            Intent i = new Intent(this, CreateSaleActivity.class);
+            startActivity(i);
+        }
+
     }
 
 
