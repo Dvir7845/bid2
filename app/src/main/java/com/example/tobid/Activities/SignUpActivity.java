@@ -157,7 +157,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
         // Define the default profile picture path
         String userImgPath = "/Users/" + uid + "/profilePicture.png";
-        User newUser = new User(uid, email, username, phoneNumber, userImgPath);
+        User newUser = new User(uid, email, phoneNumber, username, userImgPath);
 
         // Save the user profile in the database
         myRef = database.getReference("/Users/" + uid);
