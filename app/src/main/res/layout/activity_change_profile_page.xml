@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ChangeProfilePage"
+    tools:context=".Activities.ChangeProfilePage"
     android:orientation="vertical"
     android:background="#121212">
 
@@ -86,31 +86,28 @@
         android:orientation="horizontal"
         android:layout_weight="0"
         android:gravity="center"
-        android:background="#272727"
-        >
+        android:background="#272727">
 
         <ImageButton
-            android:id="@+id/ibMeetings"
+            android:id="@+id/ibBiddingHistory"
             android:layout_marginHorizontal="8dp"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="@android:drawable/ic_menu_my_calendar" />
+            android:background="@android:drawable/ic_menu_my_calendar"/>
 
         <ImageButton
             android:id="@+id/ibHomeButton"
             android:layout_marginHorizontal="8dp"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:background="@android:drawable/radiobutton_off_background"
-            />
+            android:background="@android:drawable/radiobutton_off_background"/>
 
         <ImageButton
-            android:id="@+id/ibFriendsList"
+            android:id="@+id/ibNotifications"
             android:layout_marginHorizontal="8dp"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="@android:drawable/ic_menu_view" />
-
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:drawable/ic_popup_reminder"/>
     </LinearLayout>
 
 </LinearLayout>

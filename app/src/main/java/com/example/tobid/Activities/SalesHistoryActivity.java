@@ -1,6 +1,9 @@
 package com.example.tobid.Activities;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageButton;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -10,17 +13,38 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.tobid.R;
 
-public class SalesHistoryActivity extends AppCompatActivity {
+public class SalesHistoryActivity extends AppCompatActivity implements View.OnClickListener {
+    private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_sales_history);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+
+        ibHomeButton = findViewById(R.id.ibHomeButton);
+        ibHomeButton.setOnClickListener(this);
+        ibNotifications = findViewById(R.id.ibNotifications);
+        ibNotifications.setOnClickListener(this);
+        ibBiddingHistory = findViewById(R.id.ibBiddingHistory);
+        ibBiddingHistory.setOnClickListener(this);
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == ibBiddingHistory) {
+            //Intent i = new Intent(this, SalesHistoryActivity.class);
+            //startActivity(i);
+        }
+
+        else if (v == ibHomeButton) {
+            Intent i = new Intent(this, MainPage.class);
+            startActivity(i);
+        }
+
+        else if (v == ibNotifications) {
+            Intent i = new Intent(this, NotificationsActivity.class);
+            startActivity(i);
+        }
     }
 }

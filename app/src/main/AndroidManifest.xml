@@ -46,7 +46,7 @@
             android:name=".Activities.SalesHistoryActivity"
             android:exported="false" />
         <activity
-            android:name=".ChangeProfilePage"
+            android:name=".Activities.ChangeProfilePage"
             android:exported="false" />
         <activity
             android:name=".Activities.MainPage"

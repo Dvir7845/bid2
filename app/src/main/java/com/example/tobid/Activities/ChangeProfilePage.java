@@ -1,4 +1,4 @@
-package com.example.tobid;
+package com.example.tobid.Activities;
 
 import static android.content.ContentValues.TAG;
 
@@ -17,8 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 
 import com.bumptech.glide.Glide;
-import com.example.tobid.Activities.MainPage;
-import com.example.tobid.Activities.SignInActivity;
+import com.example.tobid.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -48,7 +47,7 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
     // UI components
     private de.hdodenhof.circleimageview.CircleImageView ivPfp;
     private Button btnChangeImage, btnChangeProfile, btnLogOut;
-    private ImageButton ibHomeButton, ibFriendsList, ibMeetings;
+    private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
     private EditText etChangeUsername;
 
     // Image selection
@@ -83,10 +82,10 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
         // Initialize buttons and set click listeners
         ibHomeButton = findViewById(R.id.ibHomeButton);
         ibHomeButton.setOnClickListener(this);
-        ibFriendsList = findViewById(R.id.ibFriendsList);
-        ibFriendsList.setOnClickListener(this);
-        ibMeetings = findViewById(R.id.ibMeetings);
-        ibMeetings.setOnClickListener(this);
+        ibNotifications = findViewById(R.id.ibNotifications);
+        ibNotifications.setOnClickListener(this);
+        ibBiddingHistory = findViewById(R.id.ibBiddingHistory);
+        ibBiddingHistory.setOnClickListener(this);
 
         // Initialize username input
         etChangeUsername = findViewById(R.id.etChangeUsername);
@@ -252,8 +251,7 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
             startActivity(i);
 
         }
-
-        if (v == btnChangeImage) {
+        else if (v == btnChangeImage) {
             // Show a dialog allowing the user to choose between the gallery or camera
             AlertDialog.Builder cameraOrGalleryDialog = new AlertDialog.Builder(ChangeProfilePage.this);
             cameraOrGalleryDialog.setMessage("Take image from");
@@ -262,29 +260,26 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
             cameraOrGalleryDialog.create().show();
         }
 
-        if (v == btnLogOut) {
+        else if (v == btnLogOut) {
             // Log out the user and redirect to the SignInPage
             mAuth.signOut();
             Intent i = new Intent(this, SignInActivity.class);
-            //startActivity(i);
+            startActivity(i);
         }
 
-        if (v == ibMeetings) {
-            // Navigate to MyMeetingsPage
-            //Intent i = new Intent(this, MyMeetingsPage.class);
-            //startActivity(i);
+        else if (v == ibBiddingHistory) {
+            Intent i = new Intent(this, SalesHistoryActivity.class);
+            startActivity(i);
         }
 
-        if (v == ibHomeButton) {
-            // Navigate to the MainPage
+        else if (v == ibHomeButton) {
             Intent i = new Intent(this, MainPage.class);
             startActivity(i);
         }
 
-        if (v == ibFriendsList) {
-            // Navigate to the FriendsListPage
-            //Intent i = new Intent(this, FriendsListPage.class);
-            //startActivity(i);
+        else if (v == ibNotifications) {
+            Intent i = new Intent(this, NotificationsActivity.class);
+            startActivity(i);
         }
     }
 }
