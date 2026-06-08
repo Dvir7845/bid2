@@ -7,7 +7,7 @@
     <corners android:radius="12dp" />
     <size android:width="320dp" android:height="40dp"></size>
     <!-- This is the border color -->
-    <stroke android:width="3dp" android:color="#393939" />
+    <stroke android:width="3dp" android:color="#d4a24c" />
     <padding android:left="8dp" android:right="8dp"></padding>
     <!--- This is the background color -->
     <solid android:color="#fff" />
