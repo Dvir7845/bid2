@@ -73,6 +73,83 @@
 
 
                 <TextView
+                    android:id="@+id/tvStartingPriceText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text="Starting Price: "
+                    android:textSize="20sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"/>
+
+                <EditText
+                    android:id="@+id/etStartingPrice"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:background="@drawable/rounded_corner_view"
+                    android:ems="10"
+                    android:hint="Starting Price"
+                    android:inputType="number"
+                    android:textColor="@color/black" />
+
+
+            </LinearLayout>
+
+            <Switch
+                android:id="@+id/swIsMaximumPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:text="Set Maximum Price"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:layout_marginStart="10dp"/>
+
+            <LinearLayout
+                android:id="@+id/layoutMaximumPriceSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="10dp"
+                android:layout_marginVertical="10dp"
+                >
+
+
+                <TextView
+                    android:id="@+id/tvMaximumPriceText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text="Maximum Price: "
+                    android:textSize="20sp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"/>
+
+                <EditText
+                    android:id="@+id/etMaximumPrice"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:background="@drawable/rounded_corner_view"
+                    android:ems="10"
+                    android:hint="Maximum Price"
+                    android:inputType="number"
+                    android:textColor="@color/black"/>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginStart="10dp"
+                android:layout_marginVertical="10dp"
+                >
+
+
+                <TextView
                     android:id="@+id/tvCategoryText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -92,6 +169,7 @@
                     android:inputType="text"
                     android:textColor="@color/black"/>
             </LinearLayout>
+
 
 
             <LinearLayout

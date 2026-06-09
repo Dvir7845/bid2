@@ -3,21 +3,23 @@ package com.example.tobid.DataModels;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class Sales implements Serializable {
-    private final int itemId;
-    private final LocalDateTime startDate;
-    private final LocalDateTime endDate;
+public class Sale implements Serializable {
+    private final Item item;
+    private final String startDate;
+    private final String endDate;
     private final float startingPrice;
     private float highestOfferedBid;
+    private boolean isMaximumPrice;
     private final float maximumPrice;
     private String leadingBidderId;
     private int bidsMade;
 
-    public Sales(int itemId, LocalDateTime startDate, LocalDateTime endDate, float startingPrice, float maximumPrice) {
-        this.itemId = itemId;
+    public Sale(Item item, String startDate, String endDate, float startingPrice, boolean isMaximumPrice, float maximumPrice) {
+        this.item = item;
         this.startDate = startDate;
         this.endDate = endDate;
         this.startingPrice = startingPrice;
+        this.isMaximumPrice = isMaximumPrice;
         this.maximumPrice = maximumPrice;
 
         // Default initialization
@@ -26,15 +28,15 @@ public class Sales implements Serializable {
         this.bidsMade = 0;
     }
 
-    public int getItemId() {
-        return itemId;
+    public Item getItem() {
+        return item;
     }
 
-    public LocalDateTime getStartDate() {
+    public String getStartDate() {
         return startDate;
     }
 
-    public LocalDateTime getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 
@@ -51,7 +53,15 @@ public class Sales implements Serializable {
     }
 
     public float getMaximumPrice() {
-        return maximumPrice;
+        return this.maximumPrice;
+    }
+
+    public boolean isHasMaximumPrice() {
+        return this.isMaximumPrice;
+    }
+
+    public void setHasMaximumPrice(boolean isMaximumPrice) {
+        this.isMaximumPrice = isMaximumPrice;
     }
 
     public String getLeadingBidderId() {

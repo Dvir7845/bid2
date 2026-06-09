@@ -3,27 +3,25 @@ package com.example.tobid.DataModels;
 import java.io.Serializable;
 
 public class Item implements Serializable {
-    private int itemId;
+    private String itemId;
     private String storagePathToImg1, storagePathToImg2, storagePathToImg3;
     private String sellerUID;
     private String itemDescription;
-    private boolean isOnSale;
     private String category;
 
-    public Item(int itemId, String itemDescription, String sellerUID, boolean isOnSale, String category, String storagePathToImage1, String storagePathToImage2, String storagePathToImage3) {
+    public Item(String itemId, String itemDescription, String category, String sellerUID, String storagePathToImage1, String storagePathToImage2, String storagePathToImage3) {
         this.itemId = itemId;
         this.storagePathToImg1 = storagePathToImg1;
         this.storagePathToImg2 = storagePathToImg2;
         this.storagePathToImg3 = storagePathToImg3;
         this.sellerUID = sellerUID;
         this.itemDescription = itemDescription;
-        this.isOnSale = isOnSale;
         this.category = category;
     }
     public Item() {
     }
 
-    public int getItemId() {
+    public String getItemId() {
         return itemId;
     }
 
@@ -61,14 +59,6 @@ public class Item implements Serializable {
 
     public void setItemDescription(String itemDescription) {
         this.itemDescription = itemDescription;
-    }
-
-    public boolean isOnSale() {
-        return isOnSale;
-    }
-
-    public void setOnSale(boolean onSale) {
-        isOnSale = onSale;
     }
 
     public String getCategory() {

@@ -10,10 +10,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +24,8 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.tobid.DataModels.Item;
+import com.example.tobid.DataModels.Sale;
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -48,8 +53,10 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
     private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
 
     private Calendar bidStartDate, bidEndDate;
+    private LinearLayout layoutMaximumPriceSection;
     private TextView tvBidStartDate, tvBidEndDate;
-    private EditText etItemName, etItemDetails;
+    private EditText etItemName, etItemDetails, etStartingPrice, etMaximumPrice;
+    private Switch swIsMaximumPrice;
     private Spinner spCategory;
     private Button btnSetStartDate, btnSetEndDate, btnSelectImages, btnCreateBidding;
 
@@ -68,6 +75,8 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
 
         mAuth = FirebaseAuth.getInstance();
 
+        storage = FirebaseStorage.getInstance();
+
         // Initialize navigation bar buttons
         ibHomeButton = findViewById(R.id.ibHomeButton);
         ibHomeButton.setOnClickListener(this);
@@ -79,6 +88,22 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
         // Initialize bidding creation Views
         etItemName = findViewById(R.id.etItemName);
         etItemDetails = findViewById(R.id.etItemDetails);
+
+        etStartingPrice = findViewById(R.id.etStartingPrice);
+        etMaximumPrice = findViewById(R.id.etMaximumPrice);
+        layoutMaximumPriceSection = findViewById(R.id.layoutMaximumPriceSection);
+        layoutMaximumPriceSection.setVisibility(View.GONE);
+        swIsMaximumPrice = findViewById(R.id.swIsMaximumPrice);
+        swIsMaximumPrice.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    layoutMaximumPriceSection.setVisibility(View.VISIBLE);
+                } else {
+                    layoutMaximumPriceSection.setVisibility(View.GONE);
+                }
+            }
+        });
 
         tvBidStartDate = findViewById(R.id.tvBidStartDate);
         tvBidEndDate = findViewById(R.id.tvBidEndDate);
@@ -159,6 +184,10 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             // Get Data
             String itemName = etItemName.getText().toString();
             String itemCategory = spCategory.getSelectedItem().toString();
+            String startingPriceStr = etStartingPrice.getText().toString();
+            boolean isMaximumPrice = swIsMaximumPrice.isChecked();
+            String maximumPriceStr = etMaximumPrice.getText().toString();
+
             String bidStartDateFormatted = tvBidStartDate.getText().toString();
             String bidEndDateFormatted = tvBidEndDate.getText().toString();
             String itemDetails = etItemDetails.getText().toString();
@@ -182,18 +211,32 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             } else if (itemCategory.isEmpty()) {
                 Toast.makeText(CreateSaleActivity.this, "Please select an item category", Toast.LENGTH_SHORT).show();
                 isValid = false;
-            } else if (bidStartDate == null) {
+            } else if (startingPriceStr.isEmpty()) {
+                Toast.makeText(CreateSaleActivity.this, "Please enter a starting price", Toast.LENGTH_SHORT).show();
+                isValid = false;
+            } else if (isMaximumPrice && maximumPriceStr.isEmpty()) {
+                Toast.makeText(CreateSaleActivity.this, "Please enter a maximum price", Toast.LENGTH_SHORT).show();
+                isValid = false;
+            }
+            else if (bidStartDate == null) {
                 Toast.makeText(CreateSaleActivity.this, "Please select a starting date", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (bidEndDate == null) {
                 Toast.makeText(CreateSaleActivity.this, "Please select a end date", Toast.LENGTH_SHORT).show();
                 isValid = false;
-            } else if (bidStartDate.after(bidEndDate)) {
+            } else if (bidStartDate.after(bidEndDate) || bidStartDate.equals(bidEndDate)) {
                 Toast.makeText(CreateSaleActivity.this, "Start date cannot be after end date", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (imgPaths[0] == null) { // Ensure at least one image is selected
                 Toast.makeText(CreateSaleActivity.this, "Please select at least one image", Toast.LENGTH_SHORT).show();
                 isValid = false;
+            }
+
+            float startingPrice = Float.parseFloat(startingPriceStr);
+            float maximumPrice = isMaximumPrice ? Float.parseFloat(maximumPriceStr) : -1;
+
+            if (!isValid) {
+                return;
             }
 
             // Upload Item images to storage
@@ -207,38 +250,53 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
                 }
             }
 
+            // Create Item
             String itemId = itemName + Calendar.getInstance().getTimeInMillis();
-            // Create Bid and Sale then upload to db
-            //Item item = new Item(itemId, imgPaths[0], imgPaths[1], imgPaths[2], itemDetails, );
+            Item item = new Item(itemId, itemDetails, itemCategory, mAuth.getUid(), imgPaths[0], imgPaths[1], imgPaths[2]);
 
+            // Create Sale and upload to database
+            Sale sale = new Sale(item, bidStartDateFormatted, bidEndDateFormatted, startingPrice, isMaximumPrice, maximumPrice);
 
+            myRef = database.getReference("/Bids/" + bidId);
+            myRef.setValue(sale);
 
+            // Go to bid detail page
+            Intent i = new Intent(CreateSaleActivity.this, DisplaySaleActivity.class);
+            i.putExtra("Sale", sale);
+            startActivity(i);
         }
     }
 
     private void selectStartDateAndDisplayIn(TextView tvBidStartDate) {
-        DatePickerDialog bidEndDate = new DatePickerDialog(CreateSaleActivity.this);
+        DatePickerDialog bidStartDatePicker = new DatePickerDialog(CreateSaleActivity.this);
 
         // Don't let the user select past dates
-        bidEndDate.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis());
+        bidStartDatePicker.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis());
 
-        bidEndDate.setOnDateSetListener((datePicker, year, month, dayOfMonth) ->
+        bidStartDatePicker.setOnDateSetListener((datePicker, year, month, dayOfMonth) -> {
+            bidStartDate = Calendar.getInstance();
+            bidStartDate.set(year, month, dayOfMonth);
 
-                tvBidStartDate.setText(dayOfMonth + "-" + (month + 1) + "-" + year));
-        bidEndDate.show();
+            tvBidStartDate.setText(dayOfMonth + "-" + (month + 1) + "-" + year);
+        });
+        bidStartDatePicker.show();
     }
 
     private void selectEndDateAndDisplayIn(TextView tvBidEndDate) {
-        DatePickerDialog bidStartdDate = new DatePickerDialog(CreateSaleActivity.this);
+        DatePickerDialog bidEndDatePicker = new DatePickerDialog(CreateSaleActivity.this);
 
+        bidEndDatePicker.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis());
         if (bidStartDate != null) {
-            bidStartdDate.getDatePicker().setMinDate(bidStartDate.getTimeInMillis());
+            bidEndDatePicker.getDatePicker().setMinDate(bidStartDate.getTimeInMillis());
         }
 
-        bidStartdDate.setOnDateSetListener((datePicker, year, month, dayOfMonth) ->
+        bidEndDatePicker.setOnDateSetListener((datePicker, year, month, dayOfMonth) -> {
+            bidEndDate = Calendar.getInstance();
+            bidEndDate.set(year, month, dayOfMonth);
 
-                tvBidStartDate.setText(dayOfMonth + "-" + (month + 1) + "-" + year));
-        bidStartdDate.show();
+            tvBidEndDate.setText(dayOfMonth + "-" + (month + 1) + "-" + year);
+        });
+        bidEndDatePicker.show();
     }
 
     // Handling Activity result for image selection
@@ -268,13 +326,5 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
         if (imageUris.size() > 0) ivImg1.setImageURI(imageUris.get(0));
         if (imageUris.size() > 1) ivImg2.setImageURI(imageUris.get(1));
         if (imageUris.size() > 2) ivImg3.setImageURI(imageUris.get(2));
-    }
-    private void selectDateAndDisplayIn(TextView tvDateText, boolean isStartDate) {
-        DatePickerDialog bidStartOrEndDate = new DatePickerDialog(CreateSaleActivity.this);
-
-        // Don't let the user select past dates
-        bidStartOrEndDate.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis());
-
-
     }
 }
