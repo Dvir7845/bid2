@@ -3,45 +3,21 @@ package com.example.tobid.DataModels;
 import java.io.Serializable;
 
 public class Item implements Serializable {
-    private  int itemId;
-    private String storagePathToImage;
-    private  String sellerUID;
-    private  String itemDescription;
+    private int itemId;
+    private String storagePathToImg1, storagePathToImg2, storagePathToImg3;
+    private String sellerUID;
+    private String itemDescription;
+    private boolean isOnSale;
+    private String category;
 
-    // TODO: Should probaby switch to enum for clearer readability
-    //TODO: maybe switch to boolean for status?
-    private String status;
-    private Category category;
-    public enum Category {
-        ELECTRONICS("Electronics"),
-        CLOTHING_AND_FASHION("Clothing & Fashion"),
-        SPORTS_AND_OUTDOORS("Sports & Outdoors"),
-        HOME_AND_GARDEN("Home & Garden"),
-        TOOLS_AND_HARDWARE("Tools & Hardware"),
-        ART_AND_COLLECTIBLES("Art & Collectibles"),
-        TOYS_AND_HOBBIES("Toys & Hobbies"),
-        BEAUTY_AND_HEALTH("Beauty & Health"),
-        JEWELRY_AND_WATCHES("Jewelry & Watches"),
-        VEHICLES("Vehicles"),
-        REAL_ESTATE("Real Estate"),
-        OTHER("Other");
-
-        private final String displayName;
-
-        Category(String displayName) {
-            this.displayName = displayName;
-        }
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
-    public Item(int itemId, String storagePathToImage, String sellerUID, String itemDescription, String status, Category category) {
+    public Item(int itemId, String itemDescription, String sellerUID, boolean isOnSale, String category, String storagePathToImage1, String storagePathToImage2, String storagePathToImage3) {
         this.itemId = itemId;
-        this.storagePathToImage = storagePathToImage;
+        this.storagePathToImg1 = storagePathToImg1;
+        this.storagePathToImg2 = storagePathToImg2;
+        this.storagePathToImg3 = storagePathToImg3;
         this.sellerUID = sellerUID;
         this.itemDescription = itemDescription;
-        this.status = status;
+        this.isOnSale = isOnSale;
         this.category = category;
     }
     public Item() {
@@ -51,12 +27,28 @@ public class Item implements Serializable {
         return itemId;
     }
 
-    public String getStoragePathToImage() {
-        return storagePathToImage;
+    public String getStoragePathToImg1() {
+        return storagePathToImg1;
     }
 
-    public void setStoragePathToImage(String storagePathToImage) {
-        this.storagePathToImage = storagePathToImage;
+    public void setStoragePathToImg1(String storagePathToImg1) {
+        this.storagePathToImg1 = storagePathToImg1;
+    }
+
+    public String getStoragePathToImg2() {
+        return storagePathToImg2;
+    }
+
+    public void setStoragePathToImg2(String storagePathToImg2) {
+        this.storagePathToImg2 = storagePathToImg2;
+    }
+
+    public String getStoragePathToImg3() {
+        return storagePathToImg3;
+    }
+
+    public void setStoragePathToImg3(String storagePathToImg3) {
+        this.storagePathToImg3 = storagePathToImg3;
     }
 
     public String getSellerUID() {
@@ -71,15 +63,15 @@ public class Item implements Serializable {
         this.itemDescription = itemDescription;
     }
 
-    public String getStatus() {
-        return status;
+    public boolean isOnSale() {
+        return isOnSale;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setOnSale(boolean onSale) {
+        isOnSale = onSale;
     }
 
     public String getCategory() {
-        return category.getDisplayName();
+        return category;
     }
 }

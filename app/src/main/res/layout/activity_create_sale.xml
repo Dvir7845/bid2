@@ -90,7 +90,7 @@
                     android:background="@drawable/rounded_corner_view"
                     android:ems="10"
                     android:inputType="text"
-                    android:textColor="@color/black" />
+                    android:textColor="@color/black"/>
             </LinearLayout>
 
 
