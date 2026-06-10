@@ -5,9 +5,12 @@ import java.net.Socket;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
 
+
+
 public class ClientHandler extends Thread {
 
     private Socket socket;
+  
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -45,21 +48,29 @@ public class ClientHandler extends Thread {
 
         switch (request.getAction()) {
 
-            case "PLACE_BID":
+            case PLACE_BID:
+            	if(placeBid())
                 return new Response(
                     true,
                     "Bid received",
                     null
                 );
+            	else 
+            		return new Response(
+                        false,
+                        "Ilegle Bid ",
+                        null
+                    );
+            		
 
-            case "BUY_NOW":
+            case BUY_NOW:
                 return new Response(
                     true,
                     "Purchase completed",
                     null
                 );
 
-            case "AUTO_BID":
+            case AUTO_BID:
                 return new Response(
                     true,
                     "Auto bid activated",
@@ -74,4 +85,9 @@ public class ClientHandler extends Thread {
                 );
         }
     }
+
+	private boolean placeBid() {
+		
+		return false;
+	}
 }

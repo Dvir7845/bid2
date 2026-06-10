@@ -153,6 +153,7 @@ public class DisplaySaleActivity extends AppCompatActivity {
                 } else {
                     Toast.makeText(this, "Please enter an amount", Toast.LENGTH_SHORT).show();
                 }
+
             });
         btnAuto.setOnClickListener(v -> {
             Toast.makeText(this, "Automatic Bid Activated", Toast.LENGTH_SHORT).show();
