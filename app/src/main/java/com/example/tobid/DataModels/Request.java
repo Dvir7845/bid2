@@ -3,21 +3,29 @@ package com.example.tobid.DataModels;
 import java.io.Serializable;
 
 public class Request implements Serializable {
-    private String action;  // "PLACE_BID", "BUY_NOW", "AUTO_BID"
+    private RequestAction action;
     private String saleId;
-    private String saleCategory;
     private String userId;
     private float amount;
 
-    public Request(String action, String saleId, String saleCategory, String userId, float amount) {
+    public Request(RequestAction action, String saleId, String userId, float amount) {
         this.action = action;
         this.saleId = saleId;
-        this.saleCategory = saleCategory;
         this.userId = userId;
         this.amount = amount;
     }
+    public enum RequestAction {
+        PLACE_BID,
+        BUY_NOW,
+        AUTO_BID,
+        GET_SALE,
+        GET_ALL_SALES,
+        CREATE_SALE,
+        LOGIN,
+        REGISTER
+    }
 
-    public String getAction() {
+    public RequestAction getAction() {
         return action;
     }
 
@@ -25,9 +33,7 @@ public class Request implements Serializable {
         return saleId;
     }
 
-    public String getSaleCategory() {
-        return saleCategory;
-    }
+
 
     public String getUserId() {
         return userId;

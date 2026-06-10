@@ -3,7 +3,7 @@ package com.example.tobid.DataModels;
 import java.io.Serializable;
 
 public class Request implements Serializable {
-    private RequestAction action;  // "PLACE_BID", "BUY_NOW", "AUTO_BID"
+    private RequestAction action;  
     private String saleId;
     private String userId;
     private float amount;
