@@ -4,12 +4,14 @@ import java.io.Serializable;
 
 public class Item implements Serializable {
     private String itemId;
+    private String itemName;
     private String storagePathToImg1, storagePathToImg2, storagePathToImg3;
     private String sellerUID;
     private String itemDescription;
     private String category;
 
-    public Item(String itemId, String itemDescription, String category, String sellerUID, String storagePathToImage1, String storagePathToImage2, String storagePathToImage3) {
+    public Item(String itemName, String itemId, String itemDescription, String category, String sellerUID, String storagePathToImage1, String storagePathToImage2, String storagePathToImage3) {
+        this.itemName = itemName;
         this.itemId = itemId;
         this.storagePathToImg1 = storagePathToImg1;
         this.storagePathToImg2 = storagePathToImg2;
@@ -19,6 +21,14 @@ public class Item implements Serializable {
         this.category = category;
     }
     public Item() {
+    }
+
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
     }
 
     public String getItemId() {

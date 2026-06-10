@@ -197,7 +197,7 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             for (int i = 0; i < imageUris.size(); i++) {
                 if (imageUris.get(i) != null) {
                     // Upload image to Firebase Storage
-                    String imagePath = "/Bids/" + bidId + "/image" + (i+1);
+                    String imagePath = "/Bids/" + itemCategory + "/" + bidId + "/image" + (i+1);
                     imgPaths[i] = imagePath;
                 }
             }
@@ -252,12 +252,12 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
 
             // Create Item
             String itemId = itemName + Calendar.getInstance().getTimeInMillis();
-            Item item = new Item(itemId, itemDetails, itemCategory, mAuth.getUid(), imgPaths[0], imgPaths[1], imgPaths[2]);
+            Item item = new Item(itemName, itemId, itemDetails, itemCategory, mAuth.getUid(), imgPaths[0], imgPaths[1], imgPaths[2]);
 
             // Create Sale and upload to database
             Sale sale = new Sale(item, bidStartDateFormatted, bidEndDateFormatted, startingPrice, isMaximumPrice, maximumPrice);
 
-            myRef = database.getReference("/Bids/" + bidId);
+            myRef = database.getReference("/Bids/" + itemCategory + "/" + bidId);
             myRef.setValue(sale);
 
             // Go to bid detail page

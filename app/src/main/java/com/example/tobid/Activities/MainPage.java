@@ -9,7 +9,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -20,9 +24,12 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+
+import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -33,6 +40,9 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private TextView tvUsername;
+    private Spinner spCategory;
+    private EditText etSearchBar;
+    private Button btnSearch;
     private ImageButton btnNewSale, ibHomeButton, ibNotifications, ibBiddingHistory;;
     private CircleImageView ivPfp;
 
@@ -54,8 +64,11 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
-        btnNewSale = findViewById(R.id.BTNnewSale);
+        btnNewSale = findViewById(R.id.btnNewSale);
         btnNewSale.setOnClickListener(this);
+
+        btnSearch = findViewById(R.id.btnSearch);
+        btnSearch.setOnClickListener(this);
 
         ibHomeButton = findViewById(R.id.ibHomeButton);
         ibHomeButton.setOnClickListener(this);
@@ -63,6 +76,8 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         ibNotifications.setOnClickListener(this);
         ibBiddingHistory = findViewById(R.id.ibBiddingHistory);
         ibBiddingHistory.setOnClickListener(this);
+
+        etSearchBar = findViewById(R.id.etSearchBar);
 
         tvUsername = findViewById(R.id.tvUsername);
         // Initialize Firebase and Auth instances
@@ -80,6 +95,31 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         String uid = mAuth.getUid();
         fetchAndDisplayProfilePicture(uid);
 
+        // Fetch and display categories from the db
+        spCategory = findViewById(R.id.spCategory);
+        fetchAndDisplayCategories();
+    }
+
+    private void fetchAndDisplayCategories() {
+        myRef = database.getReference();
+        myRef.child("Categories").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                GenericTypeIndicator<ArrayList<String>> type = new GenericTypeIndicator<ArrayList<String>>() {};
+                ArrayList<String> categories = snapshot.getValue(type);
+                categories.add(0, "All"); // Add all category when displaying for no category filter
+
+                ArrayAdapter<String> spinnerAdapter =
+                        new ArrayAdapter<>(MainPage.this, android.R.layout.simple_spinner_item, categories);
+                spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+                spCategory.setAdapter(spinnerAdapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.w(TAG, "Failed to read categories", error.toException());
+            }
+        });
     }
 
     private void fetchAndDisplayProfilePicture(String uid) {
@@ -142,17 +182,17 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
             Intent i = new Intent(this, SalesHistoryActivity.class);
             startActivity(i);
         }
-
         else if (v == ibHomeButton) {
             //Intent i = new Intent(this, MainPage.class);
             //startActivity(i);
         }
-
         else if (v == ibNotifications) {
             Intent i = new Intent(this, NotificationsActivity.class);
             startActivity(i);
         }
-
+        else if (v == btnSearch) {
+            // TODO: Filter bids by category and search
+        }
     }
 
 

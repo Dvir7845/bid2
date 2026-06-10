@@ -58,7 +58,7 @@
 
 
         <ImageButton
-            android:id="@+id/BTNnewSale"
+            android:id="@+id/btnNewSale"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="center"
@@ -87,7 +87,7 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tvCategory"
+                android:id="@+id/tvCategoryText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
@@ -104,23 +104,36 @@
                 />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvSearchBar"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="10dp"
-            android:background="@drawable/rounded_corner_view"
+            android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:hint="Search a Sale"
-            android:textColorHint="#A9A9A9"/>
+            android:padding="10dp">
 
+            <EditText
+                android:id="@+id/etSearchBar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/rounded_corner_view"
+                android:hint="Search a Sale"
+                android:textColorHint="#A9A9A9"
+                android:padding="12dp"/>
+
+            <Button
+                android:id="@+id/btnSearch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Search"
+                android:backgroundTint="#d4a24c"/>
+        </LinearLayout>
 
     </LinearLayout>
 
     <TextView
-        android:id="@+id/TvSalesText"
+        android:id="@+id/tvSalesText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@color/white"
@@ -143,7 +156,7 @@
             android:orientation="vertical">
 
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/RVOngoingBids"
+                android:id="@+id/rvOngoingBids"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
