@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.play.services.location)
     implementation(libs.work.runtime)
+    implementation(libs.viewpager2)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
