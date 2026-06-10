@@ -10,7 +10,7 @@ public class Item implements Serializable {
     private String itemDescription;
     private String category;
 
-    public Item(String itemName, String itemId, String itemDescription, String category, String sellerUID, String storagePathToImage1, String storagePathToImage2, String storagePathToImage3) {
+    public Item(String itemName, String itemId, String itemDescription, String category, String sellerUID, String storagePathToImg1, String storagePathToImg2, String storagePathToImg3) {
         this.itemName = itemName;
         this.itemId = itemId;
         this.storagePathToImg1 = storagePathToImg1;

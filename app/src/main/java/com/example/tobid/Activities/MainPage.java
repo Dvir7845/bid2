@@ -4,6 +4,9 @@ import static android.content.ContentValues.TAG;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.helper.widget.MotionEffect;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,6 +20,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.example.tobid.Adapters.BidAdapter;
+import com.example.tobid.DataModels.Sale;
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -30,6 +35,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -45,6 +51,11 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     private Button btnSearch;
     private ImageButton btnNewSale, ibHomeButton, ibNotifications, ibBiddingHistory;;
     private CircleImageView ivPfp;
+
+    private ArrayList<Sale> ongoingBids;
+    private RecyclerView rvOngoingBids;
+    private View.OnClickListener onItemClickListener;
+    private BidAdapter ongoingBidAdapter;
 
 
     // Method to reload user data when the app is resumed
@@ -97,7 +108,105 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
 
         // Fetch and display categories from the db
         spCategory = findViewById(R.id.spCategory);
+        setupSpinnerListener();
         fetchAndDisplayCategories();
+
+        // Initialize Adapter and Display ongoing bids
+        ongoingBids = new ArrayList<>();
+        onItemClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int position = ((RecyclerView.ViewHolder) view.getTag()).getAdapterPosition();
+                Sale bid = ongoingBids.get(position);
+                Intent i = new Intent(MainPage.this, DisplaySaleActivity.class);
+                i.putExtra("Sale", bid);
+                startActivity(i);
+            }
+        };
+        ongoingBidAdapter = new BidAdapter(ongoingBids);
+        ongoingBidAdapter.setmOnClickListener(onItemClickListener);
+
+        rvOngoingBids = findViewById(R.id.rvOngoingBids);
+
+        rvOngoingBids.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        rvOngoingBids.setAdapter(ongoingBidAdapter);
+    }
+
+    private void setupSpinnerListener() {
+        spCategory.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                // Refresh bids filter
+                displayOngoingBidsWithFilters();
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                // noop
+            }
+        });
+    }
+
+    private void displayOngoingBidsWithFilters() {
+        String bidNameFilter = etSearchBar.getText().toString().trim().toLowerCase();
+        Object selectedCategory = spCategory.getSelectedItem();
+        String categoryFilter = (selectedCategory != null) ? selectedCategory.toString() : "All";
+
+        if (categoryFilter.equals("All")) {
+            myRef = database.getReference().child("Bids");
+        } else {
+            myRef = database.getReference().child("Bids").child(categoryFilter);
+        }
+
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                ongoingBids.clear();
+
+                if (!snapshot.exists()) {
+                    ongoingBidAdapter.notifyDataSetChanged();
+                    return;
+                }
+
+                if (categoryFilter.equals("All")) {
+                    // For each category
+                    for (DataSnapshot bidsCategorySnapshot : snapshot.getChildren()) {
+                        for (DataSnapshot bidSnapshot : bidsCategorySnapshot.getChildren()) {
+                            processAndAddBid(bidSnapshot, bidNameFilter);
+                        }
+                    }
+                } else {
+                    // A specific category is selected
+                    for (DataSnapshot bidSnapshot : snapshot.getChildren()) {
+                        processAndAddBid(bidSnapshot, bidNameFilter);
+                    }
+                }
+
+                // Shuffle ongoing bids so won't be in category order
+                Collections.shuffle(ongoingBids);
+                ongoingBidAdapter.notifyDataSetChanged();
+                System.out.println(ongoingBids);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.w(MotionEffect.TAG, "Failed to read value.", error.toException());
+            }
+        });
+
+    }
+
+    private void processAndAddBid(DataSnapshot bidSnapshot, String bidNameFilter) {
+        Sale bid = bidSnapshot.getValue(Sale.class);
+        if (bid == null) return;
+        else if (bid.getItem().getSellerUID().equals(mAuth.getUid())) return;
+        else if (!bidNameFilter.isEmpty()) {
+            String itemName = bid.getItem().getItemName().toLowerCase();
+            if (!itemName.contains(bidNameFilter))
+                return;
+        }
+        ongoingBids.add(bid);
+        System.out.println(ongoingBids);
     }
 
     private void fetchAndDisplayCategories() {
@@ -167,9 +276,6 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         });
     }
 
-
-
-
     @Override
     public void onClick(View v) {
         if(v == btnNewSale){
@@ -191,7 +297,7 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
             startActivity(i);
         }
         else if (v == btnSearch) {
-            // TODO: Filter bids by category and search
+            displayOngoingBidsWithFilters();
         }
     }
 
