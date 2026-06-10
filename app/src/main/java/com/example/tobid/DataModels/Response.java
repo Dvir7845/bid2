@@ -1,4 +1,9 @@
 package com.example.tobid.DataModels;
 
-public class Response {
+import java.io.Serializable;
+
+public class Response implements Serializable {
+    private boolean success;
+    private String message;
+    private Object data;
 }
