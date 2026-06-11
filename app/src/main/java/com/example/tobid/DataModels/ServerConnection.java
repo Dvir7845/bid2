@@ -6,8 +6,17 @@ import java.net.Socket;
 
 public class ServerConnection {
 
-    private static final String SERVER_IP = "10.0.2.2"; // כתובת השרת
+    private static final String SERVER_IP = "10.0.2.2"; // ip for simulator
     private static final int SERVER_PORT = 8080;
+    private static ServerConnection instance;
+    private ServerConnection() {}
+    // Singleton pattern to ensure only one instance of the class is created
+    public static synchronized ServerConnection getInstance() {
+        if (instance == null) {
+            instance = new ServerConnection();
+        }
+        return instance;
+    }
 
     public Response sendRequest(Request request) {
 
