@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="src" path="app/src/androidTest/java"/>
 	<classpathentry kind="src" path="app/src/main/java"/>
 	<classpathentry kind="src" path="app/src/test/java"/>
-	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="app/build/intermediates/compile_and_runtime_r_class_jar/debug/processDebugResources/R.jar"/>
 	<classpathentry kind="lib" path="app/build/intermediates/compile_r_class_jar/debug/generateDebugRFile/R.jar"/>
 	<classpathentry kind="lib" path="app/build/intermediates/merged_java_res/debug/mergeDebugJavaResource/base.jar"/>
@@ -17,5 +20,6 @@
 	<classpathentry kind="lib" path="app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/cff1f5028cd8aed0cb5a8f8cd61957bf8ce14a96bd559359e6dda0ee062c5f58_6.jar"/>
 	<classpathentry kind="lib" path="app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/cff1f5028cd8aed0cb5a8f8cd61957bf8ce14a96bd559359e6dda0ee062c5f58_7.jar"/>
 	<classpathentry kind="lib" path="gradle/wrapper/gradle-wrapper.jar"/>
+	<classpathentry kind="lib" path="C:/Users/dviry/Downloads/firebase-admin-9.2.0.jar"/>
 	<classpathentry kind="output" path="app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"/>
 </classpath>
