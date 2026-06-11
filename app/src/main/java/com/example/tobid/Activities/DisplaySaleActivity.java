@@ -15,7 +15,10 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
 import com.example.tobid.DataModels.Sale;
+import com.example.tobid.DataModels.ServerConnection;
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
@@ -150,6 +153,25 @@ public class DisplaySaleActivity extends AppCompatActivity {
                     myRef.setValue(sale);
                     tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bidAmount));
                     Toast.makeText(this, "Bid Placed: $" + amount, Toast.LENGTH_SHORT).show();
+                    //try to send bid to server
+                    new Thread(() -> {
+                        Request request = new Request(
+                                Request.RequestAction.PLACE_BID,
+                                saleId,
+                                mAuth.getUid(),
+                                bidAmount
+                        );
+                        Response response = ServerConnection.getInstance().sendRequest(request);
+                        runOnUiThread(() -> {
+                            if (response != null && response.isSuccess()) {
+                                Toast.makeText(DisplaySaleActivity.this, "Server updated successfully!", Toast.LENGTH_SHORT).show();
+                            } else {
+                                String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
+                                Toast.makeText(DisplaySaleActivity.this, "Server update failed: " + errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }).start();
+                    //end of send bid to server
                 } else {
                     Toast.makeText(this, "Please enter an amount", Toast.LENGTH_SHORT).show();
                 }
