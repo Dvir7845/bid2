@@ -12,10 +12,10 @@
         <sourceDirectory>src</sourceDirectory>
     </build>
   <dependencies>
-    <dependency>
-        <groupId>com.google.firebase</groupId>
-        <artifactId>firebase-admin</artifactId>
-        <version>9.2.0</version>
-    </dependency>
-</dependencies>
+	<dependency>
+		<groupId>com.google.firebase</groupId>
+		<artifactId>firebase-admin</artifactId>
+		<version>9.9.0</version> 
+	</dependency>
+  </dependencies>
 </project>

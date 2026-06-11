@@ -18,6 +18,7 @@ public class MainServer {
             FirebaseOptions options = FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .setDatabaseUrl("https://tobid-3032c-default-rtdb.firebaseio.com")
+                .setStorageBucket("tobid-3032c.firebasestorage.app")
                 .build();
 
             FirebaseApp.initializeApp(options);

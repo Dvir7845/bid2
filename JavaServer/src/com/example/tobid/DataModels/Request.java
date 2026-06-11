@@ -1,47 +1,28 @@
 package com.example.tobid.DataModels;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Request implements Serializable {
-    private RequestAction action;  
-    private String saleId;
-    private String userId;
-    private float amount;
+    private Action action;
+    private Map<String, Object> data;
 
-    public Request(RequestAction action, String saleId, String userId, float amount) {
+    public Request(Action action) {
         this.action = action;
-        this.saleId = saleId;
-        this.userId = userId;
-        this.amount = amount;
-    }
-    public enum RequestAction {
-        PLACE_BID,
-        BUY_NOW,
-        AUTO_BID,
-        GET_SALE,
-        GET_ALL_SALES,
-        CREATE_SALE,
-        LOGIN,
-        REGISTER
+        this.data = new HashMap<>();
     }
 
-    public RequestAction getAction() {
+    public Action getAction() {
         return action;
     }
-
-    public String getSaleId() {
-        return saleId;
+    public void putData(String key, Object value) {
+        data.put(key, value);
     }
-
-    
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public float getAmount() {
-        return amount;
+    public Object getData(String key) {
+        return data.get(key);
     }
 }
+
 
 
