@@ -15,6 +15,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
 import com.example.tobid.DataModels.Sale;
@@ -155,12 +156,11 @@ public class DisplaySaleActivity extends AppCompatActivity {
                     Toast.makeText(this, "Bid Placed: $" + amount, Toast.LENGTH_SHORT).show();
                     //try to send bid to server
                     new Thread(() -> {
-                        Request request = new Request(
-                                Request.RequestAction.PLACE_BID,
-                                saleId,
-                                mAuth.getUid(),
-                                bidAmount
-                        );
+                        Request request = new Request(Action.PLACE_BID);
+                        request.putData("saleId", saleId);
+                        request.putData("uid", mAuth.getUid());
+                        request.putData("bidAmount", bidAmount);
+
                         Response response = ServerConnection.getInstance().sendRequest(request);
                         runOnUiThread(() -> {
                             if (response != null && response.isSuccess()) {
