@@ -7,7 +7,8 @@ import java.net.Socket;
 public class ServerConnection {
 
     //private static final String SERVER_IP = "10.0.2.2"; // ip for simulator
-    private static final String SERVER_IP = "10.0.0.1" ;
+    private static final String SERVER_IP = "192.168.1.242"; // Yaniv's ip
+    //private static final String SERVER_IP = "10.0.0.1" ;
     private static final int SERVER_PORT = 8080;
     private static ServerConnection instance;
     private ServerConnection() {}

@@ -14,6 +14,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.tobid.DataModels.Notification;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Action;
+import com.example.tobid.DataModels.Response;
+import com.example.tobid.DataModels.ServerConnection;
 import com.example.tobid.DataModels.User;
 import com.example.tobid.R;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -109,29 +113,44 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                 displayMessage("Passwords must match.");
                 return;
             }
-
+            // Define the default profile picture path
             // Create a new account using Firebase Authentication
             mAuth.createUserWithEmailAndPassword(email, password)
                     .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
+
                             if (task.isSuccessful()) {
                                 // Account creation successful
-                                FirebaseUser user = mAuth.getCurrentUser();
-                                User newUser = createUser(user); // Create a new user profile
+                                String uid = mAuth.getCurrentUser().getUid();
+                                String userImgPath = "/Users/" + uid + "/profilePicture.png";
+                                User newUser = new User(uid, email, phoneNumber, username, userImgPath); // Create a new user profile
 
-                                // Create a welcome notification for the user
-                                String notificationText = "Welcome to 2Bid! Start setting up your profile by exploring new biddings.";
-                                Notification signUpNotification = new Notification(
-                                        "2Bid-" + Calendar.getInstance().getTimeInMillis(),
-                                        "2Bid", "2Bid", newUser.getImg(), notificationText);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Request request = new Request(Action.REGISTER);
+                                        request.putData("userObject", newUser);
 
-                                // Save the notification in the database
-                                myRef = database.getReference("/Users/" + mAuth.getUid() + "/notifications/" + signUpNotification.getId());
-                                myRef.setValue(signUpNotification);
+                                        ServerConnection server = ServerConnection.getInstance();
+                                        Response response = server.sendRequest(request);
 
-                                // Navigate to the sign-in page
-                                startActivity(new Intent(SignUpActivity.this, SignInActivity.class));
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                if (response != null && response.isSuccess()) {
+                                                    // Navigate to the sign-in page
+                                                    startActivity(new Intent(SignUpActivity.this, SignInActivity.class));
+                                                }
+                                                else {
+                                                    displayMessage("Server side error, couldn't create account. Please try again later");
+                                                }
+                                            }
+                                        });
+
+                                    }
+                                }).start();
+
                             } else {
                                 // Account creation failed
                                 displayMessage("Couldn't create account. Is your email correct? or maybe your password is too short?(6 characters)");
@@ -151,48 +170,5 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
     private void displayMessage(String message) {
         tvNotes.setText(message);
         Log.d("Signup", message);
-    }
-
-    /**
-     * Creates a new user profile in the Firebase Realtime Database and uploads a default profile picture.
-     *
-     * @param user The FirebaseUser created during signup.
-     */
-    private User createUser(FirebaseUser user) {
-        String uid = user.getUid();
-        String email = user.getEmail();
-        String username = etUsername.getText().toString();
-        String phoneNumber = etPhoneNumber.getText().toString();
-
-        // Define the default profile picture path
-        String userImgPath = "/Users/" + uid + "/profilePicture.png";
-        User newUser = new User(uid, email, phoneNumber, username, userImgPath);
-
-        // Save the user profile in the database
-        myRef = database.getReference("/Users/" + uid);
-        myRef.setValue(newUser);
-
-        // Upload the default profile picture
-        StorageReference defaultPfpRef = storage.getReference("/DefaultPfp/DefaultPfp.png");
-        defaultPfpRef.getBytes(1024 * 1024) // 1MB max
-                .addOnSuccessListener(bytes -> {
-                    StorageReference userPfpRef = storage.getReference(userImgPath);
-                    UploadTask uploadTask = userPfpRef.putBytes(bytes);
-
-                    uploadTask.addOnSuccessListener(taskSnapshot -> {
-                        myRef = database.getReference("/Users/" + uid + "/img");
-                        myRef.setValue(userImgPath);
-                    }).addOnFailureListener(e -> {
-                        Toast.makeText(SignUpActivity.this, "Couldn't create user, please try again", Toast.LENGTH_SHORT).show();
-                        Log.d(TAG, "Could not create user: Couldn't upload default profile picture.", e);
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(SignUpActivity.this, "Couldn't fetch default profile picture", Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Failed to get default picture: ", e);
-                });
-
-
-        return newUser;
     }
 }
