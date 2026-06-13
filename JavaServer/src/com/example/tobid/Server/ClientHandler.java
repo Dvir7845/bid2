@@ -3,12 +3,17 @@ package com.example.tobid.Server;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Iterator;
 
 import com.example.tobid.DataModels.FirebaseStorageService;
+import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Notification;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
+import com.example.tobid.DataModels.Sale;
 import com.example.tobid.DataModels.User;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -37,7 +42,9 @@ public class ClientHandler extends Thread {
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream())
         ) {
+        	System.out.println("reading request");
             Request request = (Request) in.readObject();
+            System.out.println("got request");
             Response response = processRequest(request);
             
             out.writeObject(response);
@@ -70,7 +77,8 @@ public class ClientHandler extends Thread {
             case GET_ALL_SALES:
             	break;
             case CREATE_SALE:
-            	break;
+            	response = handleCreateSale(request);
+            	return response;
             case LOGIN:
             	break;
             case REGISTER:
@@ -82,7 +90,43 @@ public class ClientHandler extends Thread {
         
 		return null; // Should be unreachable
     }
-    /**
+    private Response handleCreateSale(Request request) {
+    	try {
+	    	String bidId = (String) request.getData("bidId");
+	    	Sale sale = (Sale) request.getData("Sale");
+	    	String[] imagePaths = (String[]) request.getData("imagePaths");
+	    	
+	    	Collection<byte[]> imagesToUpload = request.getFiles().values();
+	    	
+	    	System.out.println("Got data");
+	    	
+	    	// Upload Item images to storage
+	    	FirebaseStorageService storageService = FirebaseStorageService.getInstance();
+	        Bucket bucket = storageService.getBucket();
+	        Iterator<byte[]> iterator = imagesToUpload.iterator();
+	        for (String imagePath : imagePaths) {
+	        	if (!iterator.hasNext()) break;
+	        	
+	        	byte[] imageBytes = iterator.next();
+	        	bucket.create(imagePath, imageBytes, "image/png");
+	        	System.out.println("Created image!");
+	        }
+	
+	        // Upload sale to database
+	        myRef = database.getReference().child("Bids").child(sale.getItem().getCategory()).child(bidId);
+	        myRef.setValueAsync(sale).get();
+	        System.out.println("Uploaded to db");
+	
+			return new Response(true, "Bid creation successfully.", null);
+    	} catch (Exception e) {
+    		System.err.print("Bid creation failed. ");
+			e.printStackTrace();
+			
+			return new Response(false, "Bid creation failed: " + e.getMessage(), null);
+    	}
+	}
+
+	/**
      * 
      * @param request
      * @return
@@ -100,8 +144,6 @@ public class ClientHandler extends Thread {
 	        myRef = database.getReference().child("Users").child(uid);
 	        myRef.setValueAsync(newUser).get();
 	        
-	        System.out.println("Saved user to db");
-	        
 	        FirebaseStorageService storageService = FirebaseStorageService.getInstance();
 	        Bucket bucket = storageService.getBucket();
 	        
@@ -110,16 +152,15 @@ public class ClientHandler extends Thread {
 	        if (defaultBlob == null || !defaultBlob.exists()) {
 	        	return new Response(false, "Couldn't fetch default profile picture.", null);
 	        }
-	        System.out.println("Got default pfp");
+	        
 	        byte[] defaultPfpBytes = defaultBlob.getContent();
 	        
 	        // Upload the image to the storage
 	        bucket.create(userImgPath, defaultPfpBytes, "image/png");
-	        System.out.println("Saved default pfp");
+	        
 	        // Update image path in the database
 	        myRef = database.getReference().child("Users").child(uid).child("/img");
 	        myRef.setValueAsync(userImgPath).get();
-	        System.out.println("Updated image path");
 	        
 	        // Create a welcome notification for the user
             String notificationText = "Welcome to 2Bid! Start setting up your profile by exploring new biddings.";
@@ -130,7 +171,7 @@ public class ClientHandler extends Thread {
             // Save the notification in the database
             myRef = database.getReference("/Users/" + uid + "/notifications/" + signUpNotification.getId());
             myRef.setValueAsync(signUpNotification).get();
-            System.out.println("Saved notification");
+            
 	        return new Response(true, "Registration successfull.", null);
 		} catch (Exception e) {
 			System.err.print("Registration failed for UID: " + uid);
