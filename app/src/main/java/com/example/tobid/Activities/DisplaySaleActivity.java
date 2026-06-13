@@ -17,9 +17,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Request;
-import com.example.tobid.DataModels.Response;
 import com.example.tobid.DataModels.Sale;
-import com.example.tobid.DataModels.ServerConnection;
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
@@ -161,15 +159,15 @@ public class DisplaySaleActivity extends AppCompatActivity {
                         request.putData("uid", mAuth.getUid());
                         request.putData("bidAmount", bidAmount);
 
-                        Response response = ServerConnection.getInstance().sendRequest(request);
-                        runOnUiThread(() -> {
-                            if (response != null && response.isSuccess()) {
-                                Toast.makeText(DisplaySaleActivity.this, "Server updated successfully!", Toast.LENGTH_SHORT).show();
-                            } else {
-                                String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
-                                Toast.makeText(DisplaySaleActivity.this, "Server update failed: " + errorMsg, Toast.LENGTH_LONG).show();
-                            }
-                        });
+//                        Response response = ServerConnection.getInstance().sendRequest(request);
+//                        runOnUiThread(() -> {
+//                            if (response != null && response.isSuccess()) {
+//                                Toast.makeText(DisplaySaleActivity.this, "Server updated successfully!", Toast.LENGTH_SHORT).show();
+//                            } else {
+//                                String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
+//                                Toast.makeText(DisplaySaleActivity.this, "Server update failed: " + errorMsg, Toast.LENGTH_LONG).show();
+//                            }
+//                        });
                     }).start();
                     //end of send bid to server
                 } else {

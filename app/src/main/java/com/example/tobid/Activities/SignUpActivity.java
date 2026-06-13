@@ -13,27 +13,23 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.tobid.DataModels.Notification;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Response;
-import com.example.tobid.DataModels.ServerConnection;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.example.tobid.DataModels.User;
 import com.example.tobid.R;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 
 import org.jspecify.annotations.NonNull;
-
-import java.util.Calendar;
 
 /**
  * The SignUpPage activity allows users to register for the HangOut app.
@@ -119,22 +115,25 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                     .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
-
-                            if (task.isSuccessful()) {
+                            if (!task.isSuccessful()) {
+                                // Account creation failed
+                                displayMessage("Couldn't create account. Is your email correct? or maybe your password is too short?(6 characters)");
+                                Log.w(TAG, "createUserWithEmail:failure", task.getException());
+                                Toast.makeText(SignUpActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                            } else {
                                 // Account creation successful
                                 String uid = mAuth.getCurrentUser().getUid();
                                 String userImgPath = "/Users/" + uid + "/profilePicture.png";
                                 User newUser = new User(uid, email, phoneNumber, username, userImgPath); // Create a new user profile
 
-                                new Thread(new Runnable() {
+                                Request request = new Request(Action.REGISTER);
+                                request.putData("userObject", newUser);
+
+                                // Send request to server and handle appropriately
+                                ServerConnection server = ServerConnection.getInstance();
+                                server.sendRequest(request, new ServerCallback() {
                                     @Override
-                                    public void run() {
-                                        Request request = new Request(Action.REGISTER);
-                                        request.putData("userObject", newUser);
-
-                                        ServerConnection server = ServerConnection.getInstance();
-                                        Response response = server.sendRequest(request);
-
+                                    public void onResponseReceived(Response response) {
                                         runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
@@ -147,15 +146,8 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
                                                 }
                                             }
                                         });
-
                                     }
-                                }).start();
-
-                            } else {
-                                // Account creation failed
-                                displayMessage("Couldn't create account. Is your email correct? or maybe your password is too short?(6 characters)");
-                                Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                                Toast.makeText(SignUpActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                                });
                             }
                         }
                     });

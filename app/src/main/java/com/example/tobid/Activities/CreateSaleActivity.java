@@ -24,8 +24,13 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Item;
+import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Sale;
+import com.example.tobid.DataModels.Response;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -37,6 +42,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -193,12 +201,12 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             String itemDetails = etItemDetails.getText().toString();
 
             // Get chosen images for the bidding
-            String[] imgPaths = new String[maximumImageAmount];
+            String[] imagePaths = new String[maximumImageAmount];
             for (int i = 0; i < imageUris.size(); i++) {
                 if (imageUris.get(i) != null) {
                     // Upload image to Firebase Storage
                     String imagePath = "/Bids/" + itemCategory + "/" + bidId + "/image" + (i+1);
-                    imgPaths[i] = imagePath;
+                    imagePaths[i] = imagePath;
                 }
             }
 
@@ -227,7 +235,7 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             } else if (bidStartDate.after(bidEndDate) || bidStartDate.equals(bidEndDate)) {
                 Toast.makeText(CreateSaleActivity.this, "Start date cannot be after end date", Toast.LENGTH_SHORT).show();
                 isValid = false;
-            } else if (imgPaths[0] == null) { // Ensure at least one image is selected
+            } else if (imagePaths[0] == null) { // Ensure at least one image is selected
                 Toast.makeText(CreateSaleActivity.this, "Please select at least one image", Toast.LENGTH_SHORT).show();
                 isValid = false;
             }
@@ -239,31 +247,46 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
                 return;
             }
 
-            // Upload Item images to storage
-            for (int i = 0; i < imageUris.size(); i++) {
-                if (imageUris.get(i) != null) {
-                    // Upload image to Firebase Storage
-                    String imagePath = imgPaths[i];
-                    storageRef = storage.getReference(imagePath);
-                    storageRef.putFile(imageUris.get(i));
-                    imgPaths[i] = imagePath;
-                }
-            }
-
-            // Create Item
+            // Send a CREATE_SALE Request
             String itemId = itemName + Calendar.getInstance().getTimeInMillis();
-            Item item = new Item(itemName, itemId, itemDetails, itemCategory, mAuth.getUid(), imgPaths[0], imgPaths[1], imgPaths[2]);
-
-            // Create Sale and upload to database
+            Item item = new Item(itemName, itemId, itemDetails, itemCategory, mAuth.getUid(), imagePaths[0], imagePaths[1], imagePaths[2]);
             Sale sale = new Sale(item, bidStartDateFormatted, bidEndDateFormatted, startingPrice, isMaximumPrice, maximumPrice);
 
-            myRef = database.getReference("/Bids/" + itemCategory + "/" + bidId);
-            myRef.setValue(sale);
+            Request request = new Request(Action.CREATE_SALE);
+            request.putData("bidId", bidId);
+            request.putData("Sale", sale);
+            request.putData("imagePaths", imagePaths);
 
-            // Go to bid detail page
-            Intent i = new Intent(CreateSaleActivity.this, DisplaySaleActivity.class);
-            i.putExtra("Sale", sale);
-            startActivity(i);
+            for (int i=0; i< imageUris.size(); i++) {
+                Uri imageUri = imageUris.get(i);
+                if (imageUri == null) continue;
+
+                byte[] imageBytes = uriToBytes(imageUri);
+                request.putFile("Image" + (i+1), imageBytes);
+            }
+
+            // Send request to server
+            ServerConnection server = ServerConnection.getInstance();
+            server.sendRequest(request, new ServerCallback() {
+                @Override
+                public void onResponseReceived(Response response) {
+                    // When response is received update ui
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (response != null && response.isSuccess()) {
+                                // Go to bid detail page
+                                Intent i = new Intent(CreateSaleActivity.this, DisplaySaleActivity.class);
+                                i.putExtra("Sale", sale);
+                                startActivity(i);
+                            }
+                            else {
+                                Toast.makeText(CreateSaleActivity.this, "Server side error, couldn't create bid. Please try again later", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                }
+            });
         }
     }
 
@@ -326,5 +349,25 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
         if (imageUris.size() > 0) ivImg1.setImageURI(imageUris.get(0));
         if (imageUris.size() > 1) ivImg2.setImageURI(imageUris.get(1));
         if (imageUris.size() > 2) ivImg3.setImageURI(imageUris.get(2));
+    }
+
+    public byte[] uriToBytes(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+
+            // Read the image data in 8KB chunks
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1) {
+                byteBuffer.write(buffer, 0, len);
+            }
+
+            // Return image data byteArray
+            return byteBuffer.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
