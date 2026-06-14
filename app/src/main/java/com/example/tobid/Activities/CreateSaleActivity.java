@@ -205,7 +205,7 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             for (int i = 0; i < imageUris.size(); i++) {
                 if (imageUris.get(i) != null) {
                     // Upload image to Firebase Storage
-                    String imagePath = "/Bids/" + itemCategory + "/" + bidId + "/image" + (i+1);
+                    String imagePath = "Bids/" + itemCategory + "/" + bidId + "/image" + (i+1);
                     imagePaths[i] = imagePath;
                 }
             }

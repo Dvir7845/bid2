@@ -8,5 +8,6 @@ public enum Action {
     GET_ALL_SALES,
     CREATE_SALE,
     LOGIN,
-    REGISTER
+    REGISTER,
+    GET_USER_NOTIFICATIONS
 }

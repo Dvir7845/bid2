@@ -49,8 +49,7 @@ public class ServerConnection {
 
                     callback.onResponseReceived(
                             new Response(false,
-                                    "Connection error: " + e.getMessage(),
-                                    null));
+                                    "Connection error: " + e.getMessage()));
                 }
             }}).start();
     }

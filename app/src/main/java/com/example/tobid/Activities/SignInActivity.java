@@ -14,7 +14,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.tobid.DataModels.Action;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
 import com.example.tobid.R;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -124,12 +129,32 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                // Sign-in successful
-                                Log.d(TAG, "signInWithEmail:success");
+                                // Sign-in successful, get token and send to server for verification
+                                mAuth.getCurrentUser().getIdToken(true).addOnSuccessListener(result -> {
+                                    String idToken = result.getToken();
 
-                                // Navigate to the main page
-                                Intent i = new Intent(getApplicationContext(), MainPage.class);
-                                startActivity(i);
+                                    // Build request and send to server
+                                    Request request = new Request(Action.LOGIN);
+                                    request.putData("idToken", idToken);
+
+                                    ServerConnection server = ServerConnection.getInstance();
+                                    server.sendRequest(request, new ServerCallback() {
+                                        @Override
+                                        public void onResponseReceived(Response response) {
+                                            if (response.isSuccess()) {
+                                                Log.d(TAG, "signInWithEmail:success");
+                                                // Navigate to the main page
+                                                Intent i = new Intent(getApplicationContext(), MainPage.class);
+                                                startActivity(i);
+                                            } else {
+                                                // Response unsuccessful
+                                                tvNotes.setText("Server side error. Please try again later");
+                                            }
+                                        }
+                                    });
+
+
+                                });
 
                             } else {
                                 // Sign-in failed

@@ -1,12 +1,14 @@
 package com.example.tobid.DataModels;
 
+import java.io.Serializable;
+
 /**
  * Represents a notification for a user within the application.
  * A notification includes the sender's details (id, username, profile picture)
  * and the message content associated with the notification.
  */
-public class Notification {
-
+public class Notification implements Serializable {
+    private NotificationType notificationType;
     // Unique identifier for the notification (senderID + creationTime)
     private String id;
     private String senderId;
@@ -33,7 +35,9 @@ public class Notification {
      * @param senderImg the string path to the sender's profile image in FirebaseStorage
      * @param message the message content of the notification
      */
-    public Notification(String id, String senderId, String senderUsername, String senderImg, String message) {
+    public Notification(NotificationType notificationType, String id, String senderId,
+                        String senderUsername, String senderImg, String message) {
+        this.notificationType = notificationType;
         this.id = id;
         this.senderId = senderId;
         this.senderUsername = senderUsername;
@@ -79,5 +83,13 @@ public class Notification {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public NotificationType getNotificationType() {
+        return notificationType;
+    }
+
+    public void setNotificationType(NotificationType notificationType) {
+        this.notificationType = notificationType;
     }
 }
