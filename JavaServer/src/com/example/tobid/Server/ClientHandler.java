@@ -11,6 +11,7 @@ import java.util.Iterator;
 import com.example.tobid.DataModels.FirebaseStorageService;
 import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Notification;
+import com.example.tobid.DataModels.NotificationType;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
 import com.example.tobid.DataModels.Sale;
@@ -19,8 +20,12 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class ClientHandler extends Thread {
     private Socket socket;
@@ -53,7 +58,7 @@ public class ClientHandler extends Thread {
 
         } 
         catch (Exception e) {
-            System.out.println("Error handling client: " + e.getMessage());
+            System.out.println("Error handling client: " + e.toString());
         }
     }
 
@@ -63,14 +68,14 @@ public class ClientHandler extends Thread {
         switch (request.getAction()) {
             case PLACE_BID:
                 if (placeBid()) {
-                    return new Response(true, "Bid received", null);
+                    return new Response(true, "Bid received");
                 } else {
-                    return new Response(false, "Illegal Bid", null);
+                    return new Response(false, "Illegal Bid");
                 }
             case BUY_NOW:
-                return new Response(true, "Purchase completed", null);
+                return new Response(true, "Purchase completed");
             case AUTO_BID:
-                return new Response(true, "Auto bid activated", null);
+                return new Response(true, "Auto bid activated");
             case GET_SALE:
             	response = handleGetSale(request);
             	return response;
@@ -80,17 +85,87 @@ public class ClientHandler extends Thread {
             	response = handleCreateSale(request);
             	return response;
             case LOGIN:
-            	break;
+            	response = handleLogin(request);
+            	return response;
             case REGISTER:
             	response = handleRegister(request);
             	return response;
+            case GET_USER_NOTIFICATIONS:
+            	response = handleGetUserNotifications(request);
+            	return response;
             default:
-                return new Response(false, "Unknown request", null);
+                return new Response(false, "Unknown request");
         }
         
 		return null; // Should be unreachable
     }
-    private Response handleCreateSale(Request request) {
+    private Response handleGetUserNotifications(Request request) {
+    	final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+    	
+    	ArrayList<Notification> notifications = new ArrayList<>();
+		try {
+			String uid = (String) request.getData("uid");
+			myRef = database.getReference().child("Users").child(uid).child("notifications");
+
+	        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					System.out.println("fetched notifications");
+					for (DataSnapshot datas : snapshot.getChildren()) {
+	                    Notification notification = datas.getValue(Notification.class);
+	                    notifications.add(notification);
+	                }
+					System.out.println("got notifications");
+					latch.countDown();
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					System.out.println("Error fetching requests for user: " + uid);
+					latch.countDown();
+				}
+	        });
+			
+	        // Wait for the db to fetch the notifications
+	        System.out.println("waiting for latch");
+	        latch.await();
+	        System.out.println("latch received");
+	        Response response = new Response(true, "Notifications fetch successfuly");
+	        response.putData("notifications", notifications);
+	        return response; 
+			
+		} catch (Exception e) {
+    		System.err.print("Notifications retrieval failed. ");
+			e.printStackTrace();
+			
+			return new Response(false, "Notifications retrieval failed: " + e.getMessage());
+    	}
+		
+		
+	}
+
+	private Response handleLogin(Request request) {
+		try {
+			String idToken = (String) request.getData("idToken");
+			
+			FirebaseToken token = FirebaseAuth.getInstance().verifyIdToken(idToken);
+			String uid = token.getUid();
+			
+			System.out.println("Authenticated user: " + uid);
+			return new Response(true, "Signin successfful");
+			
+		} catch (FirebaseAuthException e) {
+			return new Response(false, "Invalid token");
+		} catch (Exception e) {
+    		System.err.print("Signin failed. ");
+			e.printStackTrace();
+			
+			return new Response(false, "Signin failed: " + e.getMessage());
+    	}
+	}
+
+	private Response handleCreateSale(Request request) {
     	try {
 	    	String bidId = (String) request.getData("bidId");
 	    	Sale sale = (Sale) request.getData("Sale");
@@ -113,16 +188,29 @@ public class ClientHandler extends Thread {
 	        }
 	
 	        // Upload sale to database
-	        myRef = database.getReference().child("Bids").child(sale.getItem().getCategory()).child(bidId);
+	        Item item = sale.getItem();
+	        myRef = database.getReference().child("Bids").child(item.getCategory()).child(bidId);
 	        myRef.setValueAsync(sale).get();
 	        System.out.println("Uploaded to db");
 	
-			return new Response(true, "Bid creation successfully.", null);
+	        // Create a bid created notification for the user
+            String notificationText = "Bid " + sale.getItem().getItemName() + " successfuly created.";
+            Notification bidCreatedNotification = new Notification(NotificationType.BID_CREATED,
+                    bidId + "-" + Calendar.getInstance().getTimeInMillis(),
+                    item.getItemName(), "2Bid", imagePaths[0], notificationText);
+
+            // Save the notification in the database
+            myRef = database.getReference().child("Users").child(item.getSellerUID())
+            		.child("notifications").child(bidCreatedNotification.getId());
+            myRef.setValueAsync(bidCreatedNotification).get();
+	        
+	        
+			return new Response(true, "Bid creation successfully.");
     	} catch (Exception e) {
     		System.err.print("Bid creation failed. ");
 			e.printStackTrace();
 			
-			return new Response(false, "Bid creation failed: " + e.getMessage(), null);
+			return new Response(false, "Bid creation failed: " + e.getMessage());
     	}
 	}
 
@@ -150,7 +238,7 @@ public class ClientHandler extends Thread {
 	        // Get default profile picture from storage
 	        Blob defaultBlob = bucket.get(defaultPfpPath);
 	        if (defaultBlob == null || !defaultBlob.exists()) {
-	        	return new Response(false, "Couldn't fetch default profile picture.", null);
+	        	return new Response(false, "Couldn't fetch default profile picture.");
 	        }
 	        
 	        byte[] defaultPfpBytes = defaultBlob.getContent();
@@ -164,7 +252,7 @@ public class ClientHandler extends Thread {
 	        
 	        // Create a welcome notification for the user
             String notificationText = "Welcome to 2Bid! Start setting up your profile by exploring new biddings.";
-            Notification signUpNotification = new Notification(
+            Notification signUpNotification = new Notification(NotificationType.SIGNUP,
                     "2Bid-" + Calendar.getInstance().getTimeInMillis(),
                     "2Bid", "2Bid", newUser.getImg(), notificationText);
 
@@ -172,7 +260,7 @@ public class ClientHandler extends Thread {
             myRef = database.getReference("/Users/" + uid + "/notifications/" + signUpNotification.getId());
             myRef.setValueAsync(signUpNotification).get();
             
-	        return new Response(true, "Registration successfull.", null);
+	        return new Response(true, "Registration successfull.");
 		} catch (Exception e) {
 			System.err.print("Registration failed for UID: " + uid);
 			e.printStackTrace();
@@ -187,7 +275,7 @@ public class ClientHandler extends Thread {
 	            }
 	        }
 			
-			return new Response(false, "Uploading user data or media failed: " + e.getMessage(), null);
+			return new Response(false, "Uploading user data or media failed: " + e.getMessage());
 		}
 	}
 
