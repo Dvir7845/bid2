@@ -3,7 +3,6 @@ package com.example.tobid.Activities;
 import static android.content.ContentValues.TAG;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.helper.widget.MotionEffect;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -19,11 +18,17 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.tobid.Adapters.BidAdapter;
-import com.example.tobid.DataModels.Sale;
+import com.example.tobid.DataModels.Action;
+import com.example.tobid.DataModels.Bid;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
 import com.example.tobid.R;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -50,13 +55,13 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     private Spinner spCategory;
     private EditText etSearchBar;
     private Button btnSearch;
-    private ImageButton btnNewSale, ibHomeButton, ibNotifications, ibBiddingHistory;;
+    private ImageButton btnNewBid, ibHomeButton, ibNotifications, ibBiddingHistory;;
     private CircleImageView ivPfp;
 
-    private ArrayList<Sale> ongoingBids;
-    private RecyclerView rvOngoingBids;
-    private View.OnClickListener onItemClickListener;
-    private BidAdapter ongoingBidAdapter;
+    private ArrayList<Bid> ongoingBids, futureBids;
+    private RecyclerView rvOngoingBids, rvFutureBids;
+    private View.OnClickListener ongoingBidsOnItemClickListener, futureBidsOnItemClickListener;
+    private BidAdapter ongoingBidsAdapter, futureBidsAdapter;
 
 
     // Method to reload user data when the app is resumed
@@ -76,8 +81,8 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
-        btnNewSale = findViewById(R.id.btnNewSale);
-        btnNewSale.setOnClickListener(this);
+        btnNewBid = findViewById(R.id.btnNewBid);
+        btnNewBid.setOnClickListener(this);
 
         btnSearch = findViewById(R.id.btnSearch);
         btnSearch.setOnClickListener(this);
@@ -97,6 +102,8 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
+
+
         if (user != null) {
             fetchAndDisplayUsername();
         }
@@ -112,25 +119,49 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         setupSpinnerListener();
         fetchAndDisplayCategories();
 
-        // Initialize Adapter and Display ongoing bids
+        // Initialize Adapter and Display bids
+        initializeAndDisplayBids();
+    }
+
+    private void initializeAndDisplayBids() {
         ongoingBids = new ArrayList<>();
-        onItemClickListener = new View.OnClickListener() {
+        futureBids = new ArrayList<>();
+
+        ongoingBidsOnItemClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 int position = ((RecyclerView.ViewHolder) view.getTag()).getAdapterPosition();
-                Sale bid = ongoingBids.get(position);
-                Intent i = new Intent(MainPage.this, DisplaySaleActivity.class);
-                i.putExtra("Sale", bid);
+                Bid bid = ongoingBids.get(position);
+                Intent i = new Intent(MainPage.this, DisplayBidActivity.class);
+                i.putExtra("Bid", bid);
                 startActivity(i);
             }
         };
-        ongoingBidAdapter = new BidAdapter(ongoingBids);
-        ongoingBidAdapter.setmOnClickListener(onItemClickListener);
+        futureBidsOnItemClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int position = ((RecyclerView.ViewHolder) view.getTag()).getAdapterPosition();
+                Bid bid = futureBids.get(position);
+                Intent i = new Intent(MainPage.this, DisplayBidActivity.class);
+                i.putExtra("Bid", bid);
+                startActivity(i);
+            }
+        };
+
+        ongoingBidsAdapter = new BidAdapter(ongoingBids);
+        ongoingBidsAdapter.setmOnClickListener(ongoingBidsOnItemClickListener);
+
+        futureBidsAdapter = new BidAdapter(futureBids);
+        futureBidsAdapter.setmOnClickListener(futureBidsOnItemClickListener);
 
         rvOngoingBids = findViewById(R.id.rvOngoingBids);
+        rvFutureBids = findViewById(R.id.rvFutureBids);
 
-        rvOngoingBids.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        rvOngoingBids.setAdapter(ongoingBidAdapter);
+        rvOngoingBids.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rvOngoingBids.setAdapter(ongoingBidsAdapter);
+
+        rvFutureBids.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rvFutureBids.setAdapter(futureBidsAdapter);
     }
 
     private void setupSpinnerListener() {
@@ -153,52 +184,43 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         Object selectedCategory = spCategory.getSelectedItem();
         String categoryFilter = (selectedCategory != null) ? selectedCategory.toString() : "All";
 
-        if (categoryFilter.equals("All")) {
-            myRef = database.getReference().child("Bids");
-        } else {
-            myRef = database.getReference().child("Bids").child(categoryFilter);
-        }
+        ServerConnection server = ServerConnection.getInstance();
 
-        myRef.addValueEventListener(new ValueEventListener() {
+        Request request = new Request(Action.GET_ALL_BIDS_IN_CATEGORY);
+        request.putData("Category", selectedCategory);
+
+        server.sendRequest(request, new ServerCallback() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                ongoingBids.clear();
+            public void onResponseReceived(Response response) {
+                runOnUiThread(() -> {
+                    if (response != null && response.isSuccess()) {
+                        ongoingBids.clear();
+                        futureBids.clear();
 
-                if (!snapshot.exists()) {
-                    ongoingBidAdapter.notifyDataSetChanged();
-                    return;
-                }
+                        ArrayList<Bid> receivedBids = (ArrayList<Bid>) response.getData("ongoingBids");
+                        ongoingBids.addAll(receivedBids);
 
-                if (categoryFilter.equals("All")) {
-                    // For each category
-                    for (DataSnapshot bidsCategorySnapshot : snapshot.getChildren()) {
-                        for (DataSnapshot bidSnapshot : bidsCategorySnapshot.getChildren()) {
-                            processAndAddBid(bidSnapshot, bidNameFilter);
-                        }
+                        receivedBids = (ArrayList<Bid>) response.getData("futureBids");
+                        futureBids.addAll(receivedBids);
+
+                        System.out.println("ongoing" + ongoingBids.toString());
+                        System.out.println("future" + futureBids.toString());
+
+                        Collections.shuffle(ongoingBids);
+                        Collections.shuffle(futureBids);
+
+                        ongoingBidsAdapter.notifyDataSetChanged();
+                        futureBidsAdapter.notifyDataSetChanged();
+                    } else {
+                        Toast.makeText(MainPage.this, "Failed getting bids for display", Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    // A specific category is selected
-                    for (DataSnapshot bidSnapshot : snapshot.getChildren()) {
-                        processAndAddBid(bidSnapshot, bidNameFilter);
-                    }
-                }
-
-                // Shuffle ongoing bids so won't be in category order
-                Collections.shuffle(ongoingBids);
-                ongoingBidAdapter.notifyDataSetChanged();
-                System.out.println(ongoingBids);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(MotionEffect.TAG, "Failed to read value.", error.toException());
+                });
             }
         });
-
     }
 
     private void processAndAddBid(DataSnapshot bidSnapshot, String bidNameFilter) {
-        Sale bid = bidSnapshot.getValue(Sale.class);
+        Bid bid = bidSnapshot.getValue(Bid.class);
         if (bid == null) return;
         else if (bid.getItem().getSellerUID().equals(mAuth.getUid())) return;
         else if (!bidNameFilter.isEmpty()) {
@@ -279,14 +301,14 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
 
     @Override
     public void onClick(View v) {
-        if(v == btnNewSale){
-            Intent i = new Intent(this, CreateSaleActivity.class);
+        if(v == btnNewBid){
+            Intent i = new Intent(this, CreateBidActivity.class);
             startActivity(i);
         } else if (v == ivPfp) {
             Intent i = new Intent(this, ChangeProfilePage.class);
             startActivity(i);
         } else if (v == ibBiddingHistory) {
-            Intent i = new Intent(this, SalesHistoryActivity.class);
+            Intent i = new Intent(this, BidsHistoryActivity.class);
             startActivity(i);
         }
         else if (v == ibHomeButton) {

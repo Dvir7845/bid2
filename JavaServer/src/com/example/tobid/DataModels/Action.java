@@ -4,9 +4,8 @@ public enum Action {
     PLACE_BID,
     BUY_NOW,
     AUTO_BID,
-    GET_SALE,
-    GET_ALL_SALES,
-    CREATE_SALE,
+    GET_ALL_BIDS_IN_CATEGORY, // If passed "All" as the category field, will yield all the bids
+    CREATE_BID,
     LOGIN,
     REGISTER,
     GET_USER_NOTIFICATIONS,

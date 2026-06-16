@@ -8,9 +8,6 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,7 +17,7 @@ import com.example.tobid.DataModels.Notification;
 import com.example.tobid.DataModels.NotificationType;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
-import com.example.tobid.DataModels.Sale;
+import com.example.tobid.DataModels.Bid;
 import com.example.tobid.R;
 import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
@@ -97,7 +94,7 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
     @Override
     public void onClick(View v) {
         if (v == ibBiddingHistory) {
-            Intent i = new Intent(this, SalesHistoryActivity.class);
+            Intent i = new Intent(this, BidsHistoryActivity.class);
             startActivity(i);
         }
 
@@ -154,9 +151,10 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
                             @Override
                             public void onResponseReceived(Response response) {
                                 if (response != null && response.isSuccess()) {
-                                    Sale sale = (Sale) response.getData("Sale");
-                                    Intent i = new Intent(NotificationsActivity.this, DisplaySaleActivity.class);
-                                    i.putExtra("Sale", sale);
+                                    Bid bid = (Bid) response.getData("Bid");
+                                    System.out.println(bid);
+                                    Intent i = new Intent(NotificationsActivity.this, DisplayBidActivity.class);
+                                    i.putExtra("Bid", bid);
                                     startActivity(i);
                                 } else {
                                     Toast.makeText(NotificationsActivity.this, "Bid retrieval failed.", Toast.LENGTH_SHORT).show();

@@ -7,20 +7,17 @@ import android.widget.ImageButton;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.example.tobid.R;
 
-public class SalesHistoryActivity extends AppCompatActivity implements View.OnClickListener {
+public class BidsHistoryActivity extends AppCompatActivity implements View.OnClickListener {
     private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_sales_history);
+        setContentView(R.layout.activity_bids_history);
 
         ibHomeButton = findViewById(R.id.ibHomeButton);
         ibHomeButton.setOnClickListener(this);
@@ -33,7 +30,7 @@ public class SalesHistoryActivity extends AppCompatActivity implements View.OnCl
     @Override
     public void onClick(View v) {
         if (v == ibBiddingHistory) {
-            //Intent i = new Intent(this, SalesHistoryActivity.class);
+            //Intent i = new Intent(this, BidsHistoryActivity.class);
             //startActivity(i);
         }
 

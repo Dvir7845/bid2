@@ -3,9 +3,13 @@ package com.example.tobid.Server;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
 
 import com.example.tobid.DataModels.FirebaseStorageService;
@@ -14,7 +18,7 @@ import com.example.tobid.DataModels.Notification;
 import com.example.tobid.DataModels.NotificationType;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
-import com.example.tobid.DataModels.Sale;
+import com.example.tobid.DataModels.Bid;
 import com.example.tobid.DataModels.User;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -67,22 +71,17 @@ public class ClientHandler extends Thread {
     	Response response = null;
         switch (request.getAction()) {
             case PLACE_BID:
-                if (placeBid()) {
-                    return new Response(true, "Bid received");
-                } else {
-                    return new Response(false, "Illegal Bid");
-                }
+                response = handlePlaceBid(request);
+                return response;
             case BUY_NOW:
                 return new Response(true, "Purchase completed");
             case AUTO_BID:
                 return new Response(true, "Auto bid activated");
-            case GET_SALE:
-            	response = handleGetSale(request);
+            case GET_ALL_BIDS_IN_CATEGORY:
+            	response = handleGetAllBidsInCategory(request);
             	return response;
-            case GET_ALL_SALES:
-            	break;
-            case CREATE_SALE:
-            	response = handleCreateSale(request);
+            case CREATE_BID:
+            	response = handleCreateBid(request);
             	return response;
             case LOGIN:
             	response = handleLogin(request);
@@ -102,15 +101,115 @@ public class ClientHandler extends Thread {
             default:
                 return new Response(false, "Unknown request");
         }
-        
-		return null; // Should be unreachable
     }
-    private Response handleGetBidById(Request request) {
+
+	private Response handleGetAllBidsInCategory(Request request) {
+		LocalDate currentDate = LocalDate.now();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+		
+		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+		ArrayList<Bid> ongoingBids = new ArrayList<>();
+		ArrayList<Bid> futureBids = new ArrayList<>();
+		try {
+			String category = (String) request.getData("Category");
+			
+			myRef = database.getReference();
+			if ("All".equals(category))
+				myRef = myRef.child("Bids");
+			else
+				myRef = myRef.child("Bids").child(category);
+			
+			myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					if ("All".equals(category)) {
+						// For each category
+	                    for (DataSnapshot bidsCategorySnapshot : snapshot.getChildren()) {
+	                        for (DataSnapshot bidSnapshot : bidsCategorySnapshot.getChildren()) {
+	                            Bid bid = bidSnapshot.getValue(Bid.class);
+	                            if (bid == null) continue;
+	                            addBidIfValid(request, bid, category, 
+	                            		currentDate, formatter,
+	                            		ongoingBids, futureBids);
+	                        }
+	                    }
+					} else {
+						// A specific category is selected
+	                    for (DataSnapshot bidSnapshot : snapshot.getChildren()) {
+                            Bid bid = bidSnapshot.getValue(Bid.class);
+                            if (bid == null) continue;
+                            
+                            addBidIfValid(request, bid, category, 
+                            		currentDate, formatter,
+                            		ongoingBids, futureBids);
+	                    }
+					}
+					latch.countDown();
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+			});
+			
+			// Wait until data fetching is complete
+			latch.await();
+			
+			Response response = new Response(true, "Bids fetched successfully.");
+			
+			response.putData("ongoingBids", ongoingBids);
+			response.putData("futureBids", futureBids);
+			
+			return response;
+			
+    	} catch (Exception e) {
+    		System.err.print("Get bid request failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Get bid request failed.");
+    	}
+	}
+
+	protected void addBidIfValid(Request request, Bid bid, String category, 
+			LocalDate currentDate, DateTimeFormatter formatter, 
+			ArrayList<Bid> ongoingBids, ArrayList<Bid> futureBids) {
+		
+        // Get start and end date
+        LocalDate bidStartDate = LocalDate.parse(bid.getStartDate(), formatter);
+        LocalDate bidEndDate = LocalDate.parse(bid.getEndDate(), formatter);
+        
+        if (currentDate.isAfter(bidEndDate)) {
+        	// TODO: Bid has ended. Process appropriately
+        	handleEndedBid(request, category);
+        } 
+        else if (currentDate.isBefore(bidStartDate)) {
+        	futureBids.add(bid);
+        }
+        else {
+        	ongoingBids.add(bid);
+        }
+	}
+
+	/**
+	 * Is called from within the handleGetAllBidsInCategory function (When found a bid that ended).
+	 * TODO: This function should handle all of the post bid things. Like:
+	 * 1. Move bid from the Bids dir into the Seller and Winners past bids (hosted bids and participated bids respectively)
+	 * 2. Send a won bid \ bid ended notifications for the seller and winner.
+	 * 3. Make it so the seller and winner can't bet anymore on that screen and make the creators phone number visible
+	 * @param request
+	 */
+	protected void handleEndedBid(Request request, String category) {
+		// TODO IMPLEMENT!
+		
+	}
+
+	private Response handleGetBidById(Request request) {
     	try {
     		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
     		
     		String bidId = (String) request.getData("bidId");
-    		final Sale[] result = new Sale[1];
+    		final Bid[] result = new Bid[1];
 
     		myRef = database.getReference().child("Bids");
     		myRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -120,7 +219,7 @@ public class ClientHandler extends Thread {
 					for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
 						if (categorySnapshot.hasChild(bidId)) {
 							DataSnapshot bidSnapshot = categorySnapshot.child(bidId);
-							result[0] = bidSnapshot.getValue(Sale.class);
+							result[0] = bidSnapshot.getValue(Bid.class);
 							latch.countDown();
 						}
 					}
@@ -232,10 +331,10 @@ public class ClientHandler extends Thread {
     	}
 	}
 
-	private Response handleCreateSale(Request request) {
+	private Response handleCreateBid(Request request) {
     	try {
 	    	String bidId = (String) request.getData("bidId");
-	    	Sale sale = (Sale) request.getData("Sale");
+	    	Bid bid = (Bid) request.getData("Bid");
 	    	String[] imagePaths = (String[]) request.getData("imagePaths");
 	    	
 	    	Collection<byte[]> imagesToUpload = request.getFiles().values();
@@ -254,14 +353,14 @@ public class ClientHandler extends Thread {
 	        	System.out.println("Created image!");
 	        }
 	
-	        // Upload sale to database
-	        Item item = sale.getItem();
+	        // Upload bid to database
+	        Item item = bid.getItem();
 	        myRef = database.getReference().child("Bids").child(item.getCategory()).child(bidId);
-	        myRef.setValueAsync(sale).get();
+	        myRef.setValueAsync(bid).get();
 	        System.out.println("Uploaded to db");
 	
 	        // Create a bid created notification for the user
-            String notificationText = "Bid " + sale.getItem().getItemName() + " successfuly created.";
+            String notificationText = "Bid " + bid.getItem().getItemName() + " successfuly created.";
             Notification bidCreatedNotification = new Notification(NotificationType.BID_CREATED,
                     bidId + "-" + Calendar.getInstance().getTimeInMillis(),
                     bidId, "2Bid", imagePaths[0], notificationText);
@@ -281,11 +380,6 @@ public class ClientHandler extends Thread {
     	}
 	}
 
-	/**
-     * 
-     * @param request
-     * @return
-     */
     private Response handleRegister(Request request){
     	System.out.println("Inside handle");
 		User newUser = (User) request.getData("userObject");
@@ -346,14 +440,18 @@ public class ClientHandler extends Thread {
 		}
 	}
 
-	private Response handleGetSale(Request request) {
-
-
-		return null;
+	
+    private Response handlePlaceBid(Request request) {
+    	try {
+    		
+    		
+    		return new Response(true, "Bid placed successfully.");
+    	} catch (Exception e) {
+    		System.err.print("placing bid failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Bid not placed.");
+    	}
 	}
 
-	private boolean placeBid() {
-        
-        return true; 
-    }
 }

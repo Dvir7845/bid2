@@ -25,9 +25,9 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.tobid.DataModels.Action;
+import com.example.tobid.DataModels.Bid;
 import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Request;
-import com.example.tobid.DataModels.Sale;
 import com.example.tobid.DataModels.Response;
 import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
@@ -48,7 +48,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-public class CreateSaleActivity extends AppCompatActivity implements View.OnClickListener {
+public class CreateBidActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int PICK_IMAGES_REQUEST = 1;
     private ArrayList<Uri> imageUris = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_create_sale);
+        setContentView(R.layout.activity_create_bid);
 
         // Initialize firebase
         database = FirebaseDatabase.getInstance();
@@ -142,7 +142,7 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
                 ArrayList<String> categories = snapshot.getValue(type);
 
                 ArrayAdapter<String> spinnerAdapter =
-                        new ArrayAdapter<>(CreateSaleActivity.this, android.R.layout.simple_spinner_item, categories);
+                        new ArrayAdapter<>(CreateBidActivity.this, android.R.layout.simple_spinner_item, categories);
                 spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
                 spCategory.setAdapter(spinnerAdapter);
             }
@@ -159,7 +159,7 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onClick(View v) {
         if (v == ibBiddingHistory) {
-            Intent i = new Intent(this, SalesHistoryActivity.class);
+            Intent i = new Intent(this, BidsHistoryActivity.class);
             startActivity(i);
         }
 
@@ -214,29 +214,29 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             boolean isValid = true;
 
             if (itemName.isEmpty()) {
-                Toast.makeText(CreateSaleActivity.this, "Please enter a name for the item", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Please enter a name for the item", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (itemCategory.isEmpty()) {
-                Toast.makeText(CreateSaleActivity.this, "Please select an item category", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Please select an item category", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (startingPriceStr.isEmpty()) {
-                Toast.makeText(CreateSaleActivity.this, "Please enter a starting price", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Please enter a starting price", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (isMaximumPrice && maximumPriceStr.isEmpty()) {
-                Toast.makeText(CreateSaleActivity.this, "Please enter a maximum price", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Please enter a maximum price", Toast.LENGTH_SHORT).show();
                 isValid = false;
             }
             else if (bidStartDate == null) {
-                Toast.makeText(CreateSaleActivity.this, "Please select a starting date", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Please select a starting date", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (bidEndDate == null) {
-                Toast.makeText(CreateSaleActivity.this, "Please select a end date", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Please select a end date", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (bidStartDate.after(bidEndDate) || bidStartDate.equals(bidEndDate)) {
-                Toast.makeText(CreateSaleActivity.this, "Start date cannot be after end date", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Start date cannot be after end date", Toast.LENGTH_SHORT).show();
                 isValid = false;
             } else if (imagePaths[0] == null) { // Ensure at least one image is selected
-                Toast.makeText(CreateSaleActivity.this, "Please select at least one image", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CreateBidActivity.this, "Please select at least one image", Toast.LENGTH_SHORT).show();
                 isValid = false;
             }
 
@@ -250,11 +250,11 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             // Send a CREATE_SALE Request
             String itemId = itemName + Calendar.getInstance().getTimeInMillis();
             Item item = new Item(itemName, itemId, itemDetails, itemCategory, mAuth.getUid(), imagePaths[0], imagePaths[1], imagePaths[2]);
-            Sale sale = new Sale(item, bidStartDateFormatted, bidEndDateFormatted, startingPrice, isMaximumPrice, maximumPrice);
+            Bid bid = new Bid(item, bidStartDateFormatted, bidEndDateFormatted, startingPrice, isMaximumPrice, maximumPrice);
 
-            Request request = new Request(Action.CREATE_SALE);
+            Request request = new Request(Action.CREATE_BID);
             request.putData("bidId", bidId);
-            request.putData("Sale", sale);
+            request.putData("Bid", bid);
             request.putData("imagePaths", imagePaths);
 
             for (int i=0; i< imageUris.size(); i++) {
@@ -276,12 +276,12 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
                         public void run() {
                             if (response != null && response.isSuccess()) {
                                 // Go to bid detail page
-                                Intent i = new Intent(CreateSaleActivity.this, DisplaySaleActivity.class);
-                                i.putExtra("Sale", sale);
+                                Intent i = new Intent(CreateBidActivity.this, DisplayBidActivity.class);
+                                i.putExtra("Bid", bid);
                                 startActivity(i);
                             }
                             else {
-                                Toast.makeText(CreateSaleActivity.this, "Server side error, couldn't create bid. Please try again later", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CreateBidActivity.this, "Server side error, couldn't create bid. Please try again later", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -291,7 +291,7 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
     }
 
     private void selectStartDateAndDisplayIn(TextView tvBidStartDate) {
-        DatePickerDialog bidStartDatePicker = new DatePickerDialog(CreateSaleActivity.this);
+        DatePickerDialog bidStartDatePicker = new DatePickerDialog(CreateBidActivity.this);
 
         // Don't let the user select past dates
         bidStartDatePicker.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis());
@@ -300,13 +300,14 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             bidStartDate = Calendar.getInstance();
             bidStartDate.set(year, month, dayOfMonth);
 
-            tvBidStartDate.setText(dayOfMonth + "-" + (month + 1) + "-" + year);
+            String formattedDate = String.format("%02d-%02d-%d", dayOfMonth, (month + 1), year);
+            tvBidStartDate.setText(formattedDate);
         });
         bidStartDatePicker.show();
     }
 
     private void selectEndDateAndDisplayIn(TextView tvBidEndDate) {
-        DatePickerDialog bidEndDatePicker = new DatePickerDialog(CreateSaleActivity.this);
+        DatePickerDialog bidEndDatePicker = new DatePickerDialog(CreateBidActivity.this);
 
         bidEndDatePicker.getDatePicker().setMinDate(Calendar.getInstance().getTimeInMillis());
         if (bidStartDate != null) {
@@ -317,7 +318,8 @@ public class CreateSaleActivity extends AppCompatActivity implements View.OnClic
             bidEndDate = Calendar.getInstance();
             bidEndDate.set(year, month, dayOfMonth);
 
-            tvBidEndDate.setText(dayOfMonth + "-" + (month + 1) + "-" + year);
+            String formattedDate = String.format("%02d-%02d-%d", dayOfMonth, (month + 1), year);
+            tvBidEndDate.setText(formattedDate);
         });
         bidEndDatePicker.show();
     }

@@ -13,15 +13,11 @@ import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.tobid.DataModels.Bid;
 import com.example.tobid.DataModels.Item;
-import com.example.tobid.DataModels.Sale;
-import com.example.tobid.DataModels.User;
 import com.example.tobid.R;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -33,11 +29,11 @@ import java.util.ArrayList;
 public class BidAdapter extends RecyclerView.Adapter<BidAdapter.BidViewHolder> {
 
     // List of bids to be displayed
-    private ArrayList<Sale> bids;
+    private ArrayList<Bid> bids;
     // Click listener for handling item click events
     private View.OnClickListener mOnClickListener;
 
-    public BidAdapter(ArrayList<Sale> bids) {
+    public BidAdapter(ArrayList<Bid> bids) {
         this.bids = bids;
     }
 
@@ -71,7 +67,7 @@ public class BidAdapter extends RecyclerView.Adapter<BidAdapter.BidViewHolder> {
         DatabaseReference myRef;
 
         // Get the current bid
-        Sale bid = bids.get(position);
+        Bid bid = bids.get(position);
 
         Item item = bid.getItem();
 
@@ -79,7 +75,8 @@ public class BidAdapter extends RecyclerView.Adapter<BidAdapter.BidViewHolder> {
         holder.tvBidName.setText(item.getItemName());
 
         // Fetch and display the bid's current price
-        holder.tvCurrentPrice.setText(String.valueOf(bid.getHighestOfferedBid()));
+        double currentPrice = Math.max(bid.getHighestOfferedBid(), bid.getStartingPrice());
+        holder.tvCurrentPrice.setText(String.valueOf(currentPrice));
 
         // Access Firebase Storage to fetch the first image of the bid
         FirebaseStorage storage = FirebaseStorage.getInstance();

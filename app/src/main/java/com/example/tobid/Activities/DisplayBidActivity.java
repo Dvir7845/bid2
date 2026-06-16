@@ -1,5 +1,6 @@
 package com.example.tobid.Activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
@@ -16,9 +17,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.tobid.DataModels.Action;
+import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
-import com.example.tobid.DataModels.Sale;
+import com.example.tobid.DataModels.Bid;
 import com.example.tobid.R;
 import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
@@ -32,12 +34,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
-public class DisplaySaleActivity extends AppCompatActivity {
+public class DisplayBidActivity extends AppCompatActivity implements View.OnClickListener{
     private TextView tvItemName, tvCategory, tvCurrentPrice, tvTimer, tvDetails;
     private EditText etBidAmount;
     private Button btnBid, btnAuto, btnBuy;
     private ImageView imageView1, imageView2, imageView3;
-    private Sale sale;
+    private Bid bid;
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private FirebaseAuth mAuth;
@@ -50,29 +52,48 @@ public class DisplaySaleActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_display_sale);
+        setContentView(R.layout.activity_display_bid);
         initViews();
+
+        // Initialize Firebase components
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference();
-        saleId = getIntent().getStringExtra("saleId");
-        saleCategory = getIntent().getStringExtra("saleCategory");
-        sale = (Sale) getIntent().getSerializableExtra("Sale");
         mAuth = FirebaseAuth.getInstance();
-        if (sale != null) {
-            tvItemName.setText(sale.getItem().getItemName());
-            tvCategory.setText(sale.getItem().getCategory());
-            tvDetails.setText(sale.getItem().getItemDescription());
-            tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", sale.getStartingPrice()));
 
-            if (sale.isHasMaximumPrice()) {
-                btnBuy.setVisibility(View.VISIBLE);
-                btnBuy.setText("BUY IT NOW FOR $" + sale.getMaximumPrice());
-            } else {
-                btnBuy.setVisibility(View.GONE);
-            }
-            startCountdown(sale.getEndDate());
+        // Get bid data
+        Intent intent = getIntent();
+
+        bid = (Bid) intent.getSerializableExtra("Bid");
+        if (bid == null) {
+            Toast.makeText(DisplayBidActivity.this, "No Data passed on the bid to display", Toast.LENGTH_SHORT).show();
+            Intent i = new Intent(DisplayBidActivity.this, MainPage.class);
+            startActivity(i);
         }
-        setupClickListeners();
+
+        Item item = bid.getItem();
+
+        saleId = item.getItemId();
+        saleCategory = item.getCategory();
+
+        tvItemName.setText(bid.getItem().getItemName());
+        tvCategory.setText(bid.getItem().getCategory());
+        tvDetails.setText(bid.getItem().getItemDescription());
+        tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bid.getStartingPrice()));
+
+        if (bid.isHasMaximumPrice()) {
+            btnBuy.setVisibility(View.VISIBLE);
+            btnBuy.setText("BUY IT NOW FOR $" + bid.getMaximumPrice());
+        } else {
+            btnBuy.setVisibility(View.GONE);
+        }
+
+        // If the user is the creator of the bid
+        if(mAuth.getUid().equals(bid.getItem().getSellerUID())){
+            btnBid.setEnabled(false);
+            btnAuto.setEnabled(false);
+        }
+
+        startCountdown(bid.getEndDate());
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -139,59 +160,6 @@ public class DisplaySaleActivity extends AppCompatActivity {
         btnBuy.setEnabled(false);
         etBidAmount.setEnabled(false);
     }
-// ToDo: need to change to work with server
-    private void setupClickListeners() {
-        // Set up click listeners for buttons
-            btnBid.setOnClickListener(v -> {
-                //check if user is the creator of the sale
-                if(mAuth.getUid()==sale.getItem().getSellerUID()){
-                    Toast.makeText(this, "You cannot bid on your own sale", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                //check if bid is valid
-                String amount = etBidAmount.getText().toString();
-                if (amount.isEmpty()) {
-                    Toast.makeText(this, "Please enter an amount", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                float bidAmount = Float.parseFloat(amount);
-                //check before request to server to see if bid is valid
-                if (bidAmount <= sale.getHighestOfferedBid()) {
-                    Toast.makeText(this, "Bid must be higher than current price", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                Request request = new Request(Action.PLACE_BID);
-                request.putData("saleId", saleId);
-                request.putData("saleCategory", saleCategory);
-                request.putData("uid", mAuth.getUid());
-                request.putData("bidAmount", bidAmount);
-                ServerConnection.getInstance().sendRequest(request, new ServerCallback() {
-                    @Override
-                    public void onResponseReceived(Response response) {
-
-                        runOnUiThread(() -> {
-                            if (response != null && response.isSuccess()) {
-                                Toast.makeText(DisplaySaleActivity.this, "Bid Placed Successfully!", Toast.LENGTH_SHORT).show();
-                                tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bidAmount));
-                                sale.setHighestOfferedBid(bidAmount); // עדכון האובייקט המקומי
-                            } else {
-                                String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
-                                Toast.makeText(DisplaySaleActivity.this, "Failed to place bid: " + errorMsg, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                });
-            });
-
-
-        btnAuto.setOnClickListener(v -> {
-            Toast.makeText(this, "Automatic Bid Activated", Toast.LENGTH_SHORT).show();
-        });
-
-        btnBuy.setOnClickListener(v -> {
-            Toast.makeText(this, "Item Purchased via Buy It Now!", Toast.LENGTH_SHORT).show();
-        });
-    }
 
     @Override
     protected void onDestroy() {
@@ -202,17 +170,45 @@ public class DisplaySaleActivity extends AppCompatActivity {
 
     public void onClick(View v) {
         if (v == btnBid) {
+            // Check if bid is valid
             String amount = etBidAmount.getText().toString();
-            if (!amount.isEmpty()) {
-                Toast.makeText(this, "Bid Placed: $" + amount, Toast.LENGTH_SHORT).show();
-                sale.setHighestOfferedBid(Float.parseFloat(amount));
-                sale.setLeadingBidderId(mAuth.getUid());
-            } else {
+            if (amount.isEmpty()) {
                 Toast.makeText(this, "Please enter an amount", Toast.LENGTH_SHORT).show();
+                return;
             }
-        } else if (v == btnAuto) {
+            float bidAmount = Float.parseFloat(amount);
+            //check before request to server to see if bid is valid
+            if (bidAmount <= bid.getHighestOfferedBid()) {
+                Toast.makeText(this, "Bid must be higher than current price", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Request request = new Request(Action.PLACE_BID);
+            request.putData("saleId", saleId);
+            request.putData("saleCategory", saleCategory);
+            request.putData("uid", mAuth.getUid());
+            request.putData("bidAmount", bidAmount);
+            ServerConnection.getInstance().sendRequest(request, new ServerCallback() {
+                @Override
+                public void onResponseReceived(Response response) {
 
+                    runOnUiThread(() -> {
+                        if (response != null && response.isSuccess()) {
+                            Toast.makeText(DisplayBidActivity.this, "Bid Placed Successfully!", Toast.LENGTH_SHORT).show();
+                            tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bidAmount));
+                            bid.setHighestOfferedBid(bidAmount); // עדכון האובייקט המקומי
+                        } else {
+                            String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
+                            Toast.makeText(DisplayBidActivity.this, "Failed to place bid: " + errorMsg, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            });
+        } else if (v == btnAuto) {
+            // TODO: Make auto bid feature in server
+            Toast.makeText(this, "Automatic Bid Activated", Toast.LENGTH_SHORT).show();
         } else if (v == btnBuy) {
+            // TODO: Make buy button feature in server
+            Toast.makeText(this, "Item Purchased via Buy It Now!", Toast.LENGTH_SHORT).show();
         }
     }
 }

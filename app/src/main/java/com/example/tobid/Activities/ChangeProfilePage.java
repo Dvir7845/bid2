@@ -268,7 +268,7 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
         }
 
         else if (v == ibBiddingHistory) {
-            Intent i = new Intent(this, SalesHistoryActivity.class);
+            Intent i = new Intent(this, BidsHistoryActivity.class);
             startActivity(i);
         }
 

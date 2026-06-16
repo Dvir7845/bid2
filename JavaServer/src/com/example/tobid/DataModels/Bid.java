@@ -3,7 +3,7 @@ package com.example.tobid.DataModels;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-public class Sale implements Serializable {
+public class Bid implements Serializable {
     private final Item item;
     private final String startDate;
     private final String endDate;
@@ -14,14 +14,14 @@ public class Sale implements Serializable {
     private String leadingBidderId;
     private int bidsMade;
 
-    public Sale() {
+    public Bid() {
         this.item = null;
         this.startDate = null;
         this.endDate = null;
         this.startingPrice = 0;
         this.maximumPrice = 0;
     }
-    public Sale(Item item, String startDate, String endDate, float startingPrice, boolean isMaximumPrice, float maximumPrice) {
+    public Bid(Item item, String startDate, String endDate, float startingPrice, boolean isMaximumPrice, float maximumPrice) {
         this.item = item;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -87,3 +87,4 @@ public class Sale implements Serializable {
         this.bidsMade = bidsMade;
     }
 }
+

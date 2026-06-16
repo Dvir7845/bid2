@@ -34,16 +34,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ToBid">
         <activity
-            android:name=".Activities.CreateSaleActivity"
+            android:name=".Activities.CreateBidActivity"
             android:exported="false" />
         <activity
-            android:name=".Activities.DisplaySaleActivity"
+            android:name=".Activities.DisplayBidActivity"
             android:exported="false" />
         <activity
             android:name=".Activities.NotificationsActivity"
             android:exported="false" />
         <activity
-            android:name=".Activities.SalesHistoryActivity"
+            android:name=".Activities.BidsHistoryActivity"
             android:exported="false" />
         <activity
             android:name=".Activities.ChangeProfilePage"
