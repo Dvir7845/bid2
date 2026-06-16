@@ -20,6 +20,7 @@ import com.example.tobid.DataModels.Notification;
 import com.example.tobid.DataModels.NotificationType;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
+import com.example.tobid.DataModels.Sale;
 import com.example.tobid.R;
 import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
@@ -74,12 +75,12 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
                         if (response.isSuccess()) {
                             ArrayList<Notification> newNotifications = (ArrayList<Notification>) response.getData("notifications");
 
-                            notifications.clear();
-                            notifications.addAll(newNotifications);
-                            notificationAdapter.notifyItemInserted(notifications.size());
-                            notificationAdapter.notifyItemRangeChanged(0, notifications.size());
+                            if (newNotifications != null) {
+                                notifications.clear();
 
-                            System.out.println(notifications);
+                                notifications.addAll(newNotifications);
+                                notificationAdapter.notifyDataSetChanged();
+                            }
                         } else {
                             Toast.makeText(NotificationsActivity.this,
                                     "Server couldn't fetch notifications.", Toast.LENGTH_SHORT).show();
@@ -123,13 +124,45 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
                 Notification notification = notifications.get(position);
                 NotificationType notificationType = notification.getNotificationType();
 
+                ServerConnection server = ServerConnection.getInstance();
+                Request request;
+
                 switch (notificationType) {
-                    case SIGNUP:
-                        // TODO: send a remove notification request and go to main page
+                    case SIGNUP:  // Send a remove notification request and go to main page
+                        request = new Request(Action.REMOVE_NOTIFICATION_BY_ID);
+                        request.putData("uid", mAuth.getUid());
+                        request.putData("notificationId", notification.getId());
+
+                        server.sendRequest(request, new ServerCallback() {
+                            @Override
+                            public void onResponseReceived(Response response) {
+                                if (response != null && response.isSuccess()) {
+                                    Intent i = new Intent(NotificationsActivity.this, MainPage.class);
+                                    startActivity(i);
+                                }
+                            }
+                        });
+
                         break;
                     case BID_CREATED:
                     case LOST_LEAD_IN_BID:
-                        // TODO: get specific bid from server and go to bid page
+                        // Get specific bid from server and go to bid page
+                        request = new Request(Action.GET_BID_BY_BID_ID);
+                        request.putData("bidId", notification.getSenderId());
+
+                        server.sendRequest(request, new ServerCallback() {
+                            @Override
+                            public void onResponseReceived(Response response) {
+                                if (response != null && response.isSuccess()) {
+                                    Sale sale = (Sale) response.getData("Sale");
+                                    Intent i = new Intent(NotificationsActivity.this, DisplaySaleActivity.class);
+                                    i.putExtra("Sale", sale);
+                                    startActivity(i);
+                                } else {
+                                    Toast.makeText(NotificationsActivity.this, "Bid retrieval failed.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
                         break;
                     case BID_WON:
                         // TODO: Go to chat activity with bid creator

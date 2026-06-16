@@ -64,9 +64,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onBindViewHolder(@NonNull NotificationViewHolder holder, int position) {
-        // Return early if the notifications list is empty
-        if (notifications.isEmpty()) return;
-
         // Get the current notification
         Notification notification = notifications.get(position);
 
@@ -76,15 +73,12 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         // Get the sender's image from Firebase Storage
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference storageRef = storage.getReference(notification.getSenderImg());
-        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-            // Use Glide to load the sender's profile picture into the ImageView
-            Glide.with(context.getApplicationContext())
-                    .load(uri)
-                    .into(holder.ivPfp);
-        }).addOnFailureListener(exception -> {
-            // Log any errors that occur while fetching the download URL
-            Log.e("FirebaseStorage", "Failed to get download URL: " + exception.getMessage());
-        });
+
+        // Use Glide to load the sender's profile picture into the ImageView
+        Glide.with(context.getApplicationContext())
+                .load(storageRef)
+                .placeholder(R.drawable.default_pfp)
+                .into(holder.ivPfp);
     }
 
     /**
