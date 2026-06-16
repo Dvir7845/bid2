@@ -93,13 +93,80 @@ public class ClientHandler extends Thread {
             case GET_USER_NOTIFICATIONS:
             	response = handleGetUserNotifications(request);
             	return response;
+            case REMOVE_NOTIFICATION_BY_ID:
+            	response = handleRemoveNotificationById(request);
+            	return response;
+            case GET_BID_BY_BID_ID:
+            	response = handleGetBidById(request);
+            	return response;
             default:
                 return new Response(false, "Unknown request");
         }
         
 		return null; // Should be unreachable
     }
-    private Response handleGetUserNotifications(Request request) {
+    private Response handleGetBidById(Request request) {
+    	try {
+    		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+    		
+    		String bidId = (String) request.getData("bidId");
+    		final Sale[] result = new Sale[1];
+
+    		myRef = database.getReference().child("Bids");
+    		myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
+						if (categorySnapshot.hasChild(bidId)) {
+							DataSnapshot bidSnapshot = categorySnapshot.child(bidId);
+							result[0] = bidSnapshot.getValue(Sale.class);
+							latch.countDown();
+						}
+					}
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+    			
+    		});
+    		latch.await();
+    		
+    		if (result[0] != null) {
+    			Response response = new Response(true, "Bid by id retrieval succeeded.");
+    	        response.putData("Bid", result[0]);
+    	        return response;
+    	    } else {
+    	        return new Response(false, "Bid not found.");
+    	    }
+    	} catch (Exception e) {
+    		System.err.print("Bid by id retrieval failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Bid by id retrieval failed.");
+    	}
+	}
+
+	private Response handleRemoveNotificationById(Request request) {
+    	try {
+    		String uid = (String) request.getData("uid");
+    		String notificationId = (String) request.getData("notificationId");
+    		
+    		myRef = database.getReference().child("Users").child(uid).child("notifications").child(notificationId);
+    		myRef.setValueAsync(null).get();
+    		
+    		return new Response(true, "Notification removal succeeded.");
+    	} catch (Exception e) {
+    		System.err.print("Notification removal failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Notification removal failed.");
+    	}
+	}
+
+	private Response handleGetUserNotifications(Request request) {
     	final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
     	
     	ArrayList<Notification> notifications = new ArrayList<>();
@@ -136,10 +203,10 @@ public class ClientHandler extends Thread {
 	        return response; 
 			
 		} catch (Exception e) {
-    		System.err.print("Notifications retrieval failed. ");
+    		System.err.print("Notifications retrieval failed: " + e.getMessage());
 			e.printStackTrace();
 			
-			return new Response(false, "Notifications retrieval failed: " + e.getMessage());
+			return new Response(false, "Notifications retrieval failed.");
     	}
 		
 		
@@ -197,7 +264,7 @@ public class ClientHandler extends Thread {
             String notificationText = "Bid " + sale.getItem().getItemName() + " successfuly created.";
             Notification bidCreatedNotification = new Notification(NotificationType.BID_CREATED,
                     bidId + "-" + Calendar.getInstance().getTimeInMillis(),
-                    item.getItemName(), "2Bid", imagePaths[0], notificationText);
+                    bidId, "2Bid", imagePaths[0], notificationText);
 
             // Save the notification in the database
             myRef = database.getReference().child("Users").child(item.getSellerUID())

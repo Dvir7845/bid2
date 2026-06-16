@@ -29,6 +29,7 @@ public class Notification implements Serializable{
     /**
      * Constructor for a Notification object.
      *
+     * @param notificationType the NotificationType enum value representing notification type
      * @param id the unique notification ID (constructed from senderId + creation time in millis)
      * @param senderId the user ID of the sender
      * @param senderUsername the username of the sender
