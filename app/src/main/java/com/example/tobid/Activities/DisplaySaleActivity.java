@@ -17,8 +17,11 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
 import com.example.tobid.DataModels.Sale;
 import com.example.tobid.R;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -140,41 +143,47 @@ public class DisplaySaleActivity extends AppCompatActivity {
     private void setupClickListeners() {
         // Set up click listeners for buttons
             btnBid.setOnClickListener(v -> {
-                String amount = etBidAmount.getText().toString();
-                if (!amount.isEmpty()) {
-                    float bidAmount = Float.parseFloat(amount);
-                    if (bidAmount <= sale.getHighestOfferedBid()) {
-                        Toast.makeText(this, "Bid must be higher than current price", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    sale.setHighestOfferedBid(bidAmount);
-                    sale.setLeadingBidderId(mAuth.getUid());
-                    myRef.setValue(sale);
-                    tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bidAmount));
-                    Toast.makeText(this, "Bid Placed: $" + amount, Toast.LENGTH_SHORT).show();
-                    //try to send bid to server
-                    new Thread(() -> {
-                        Request request = new Request(Action.PLACE_BID);
-                        request.putData("saleId", saleId);
-                        request.putData("uid", mAuth.getUid());
-                        request.putData("bidAmount", bidAmount);
-
-//                        Response response = ServerConnection.getInstance().sendRequest(request);
-//                        runOnUiThread(() -> {
-//                            if (response != null && response.isSuccess()) {
-//                                Toast.makeText(DisplaySaleActivity.this, "Server updated successfully!", Toast.LENGTH_SHORT).show();
-//                            } else {
-//                                String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
-//                                Toast.makeText(DisplaySaleActivity.this, "Server update failed: " + errorMsg, Toast.LENGTH_LONG).show();
-//                            }
-//                        });
-                    }).start();
-                    //end of send bid to server
-                } else {
-                    Toast.makeText(this, "Please enter an amount", Toast.LENGTH_SHORT).show();
+                //check if user is the creator of the sale
+                if(mAuth.getUid()==sale.getItem().getSellerUID()){
+                    Toast.makeText(this, "You cannot bid on your own sale", Toast.LENGTH_SHORT).show();
+                    return;
                 }
+                //check if bid is valid
+                String amount = etBidAmount.getText().toString();
+                if (amount.isEmpty()) {
+                    Toast.makeText(this, "Please enter an amount", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                float bidAmount = Float.parseFloat(amount);
+                //check before request to server to see if bid is valid
+                if (bidAmount <= sale.getHighestOfferedBid()) {
+                    Toast.makeText(this, "Bid must be higher than current price", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Request request = new Request(Action.PLACE_BID);
+                request.putData("saleId", saleId);
+                request.putData("saleCategory", saleCategory);
+                request.putData("uid", mAuth.getUid());
+                request.putData("bidAmount", bidAmount);
+                ServerConnection.getInstance().sendRequest(request, new ServerCallback() {
+                    @Override
+                    public void onResponseReceived(Response response) {
 
+                        runOnUiThread(() -> {
+                            if (response != null && response.isSuccess()) {
+                                Toast.makeText(DisplaySaleActivity.this, "Bid Placed Successfully!", Toast.LENGTH_SHORT).show();
+                                tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bidAmount));
+                                sale.setHighestOfferedBid(bidAmount); // עדכון האובייקט המקומי
+                            } else {
+                                String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
+                                Toast.makeText(DisplaySaleActivity.this, "Failed to place bid: " + errorMsg, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+                });
             });
+
+
         btnAuto.setOnClickListener(v -> {
             Toast.makeText(this, "Automatic Bid Activated", Toast.LENGTH_SHORT).show();
         });
