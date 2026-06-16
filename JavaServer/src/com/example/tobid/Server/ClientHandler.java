@@ -175,9 +175,6 @@ public class ClientHandler extends Thread {
 			LocalDate currentDate, DateTimeFormatter formatter, 
 			ArrayList<Bid> ongoingBids, ArrayList<Bid> futureBids) {
 		
-        String startDate = bid.getStartDate();
-        String endDate = bid.getEndDate();
-        
         // Get start and end date
         LocalDate bidStartDate = LocalDate.parse(bid.getStartDate(), formatter);
         LocalDate bidEndDate = LocalDate.parse(bid.getEndDate(), formatter);
