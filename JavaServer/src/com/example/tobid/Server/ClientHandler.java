@@ -77,7 +77,8 @@ public class ClientHandler extends Thread {
             	response = handleBuyNow(request);
             	return response;
             case AUTO_BID:
-                return new Response(true, "Auto bid activated");
+            	 response=handleAutoBid(request);
+                return response;
             case GET_ALL_BIDS_IN_CATEGORY:
             	response = handleGetAllBidsInCategory(request);
             	return response;
@@ -486,13 +487,17 @@ public class ClientHandler extends Thread {
             if (buyerUid.equals(bid.getItem().getSellerUID())) {
                 return new Response(false, "Sellers cannot purchase their own items.");
             }
-            if(bid.getHighestOfferedBid()>=bidAmount)
-            	return new Response(false,"Someone has already placed a higher bid. ");
+            float currentHighest = bid.getHighestOfferedBid();
+            float minimumAllowedBid = currentHighest + getMinimumIncrement(currentHighest);
+            if (bidAmount < minimumAllowedBid) {
+                return new Response(false, "Bid is too low. For this price category, the minimum bid must be at least $" + minimumAllowedBid);
+            }
             
             bid.setHighestOfferedBid(bidAmount);
             bid.setLeadingBidderId(buyerUid);
             bidRef.setValueAsync(bid).get();
-            
+            //wake up AutoBuy bots
+            runAutoBidDuel(bidId, category);
             
     		
     		return new Response(true, "Bid placed successfully.");
@@ -553,5 +558,120 @@ return new Response(true, "Purchase completed successfully!");
             return new Response(false, "Internal server error during purchase: " + e.getMessage());
         }
     }
+    private Response handleAutoBid(Request request) {
+        try {
+            String bidId = (String) request.getData("saleId");
+            String category = ((String) request.getData("saleCategory")).toUpperCase();
+            String uid = (String) request.getData("uid");
+            float maxAutoLimit = ((Number) request.getData("maxAutoLimit")).floatValue();
 
+            
+            DatabaseReference autoBidRef = database.getReference()
+                    .child("AutoBids").child(category).child(bidId).child(uid);
+            
+           
+            autoBidRef.setValueAsync(maxAutoLimit).get();
+
+            System.out.println("AutoBid activated for user " + uid + " with limit $" + maxAutoLimit);
+            return new Response(true, "AutoBid activated successfully!");
+
+        } catch (Exception e) {
+            System.err.println("Failed to activate AutoBid: " + e.getMessage());
+            return new Response(false, "Internal server error activating AutoBid.");
+        }
+    }
+    
+    private float getMinimumIncrement(float currentPrice) {
+        if (currentPrice < 10) {
+            return 0.50f;
+        } else if (currentPrice < 50) {
+            return 1.00f;  
+        } else if (currentPrice < 250) {
+            return 5.00f;  
+        } else if (currentPrice < 1000) {
+            return 10.00f;
+        } else if(currentPrice<10000) {
+            return 50.00f; 
+        } else if(currentPrice<100000) {
+            return 500.00f; 
+        }else
+            	return 1000f;
+        }
+    
+    private void runAutoBidDuel(String bidId, String category) {
+        try {
+            boolean duelOngoing = true;
+            
+            while (duelOngoing) {
+                final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(2);
+                final Bid[] bidHolder = new Bid[1];
+                final DataSnapshot[] autoBidsSnapshotHolder = new DataSnapshot[1];
+                //get the new price
+                DatabaseReference bidRef = database.getReference().child("Bids").child(category).child(bidId);
+                bidRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                	@Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        if (snapshot.exists()) bidHolder[0] = snapshot.getValue(Bid.class);
+                        latch.countDown();
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError error) { latch.countDown(); }
+                });
+                //get all active bots 
+                DatabaseReference autoBidsRef = database.getReference().child("AutoBids").child(category).child(bidId);
+                autoBidsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        autoBidsSnapshotHolder[0] = snapshot;
+                        latch.countDown();
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError error) { latch.countDown(); }
+                });
+
+                latch.await();
+
+                Bid bid = bidHolder[0];
+                DataSnapshot autoBidsSnapshot = autoBidsSnapshotHolder[0];
+                if (bid == null || autoBidsSnapshot == null || !autoBidsSnapshot.exists()) {
+                    duelOngoing = false;
+                    break;
+                }
+                float currentHighestPrice = bid.getHighestOfferedBid();
+                String currentLeadingBidder = bid.getLeadingBidderId();
+                float nextRequiredBid = currentHighestPrice +  getMinimumIncrement(currentHighestPrice);
+                if (bid.isHasMaximumPrice() && nextRequiredBid >= bid.getMaximumPrice()) {
+                    duelOngoing = false;
+                    break;
+                }
+                String bestBotUid = null;
+                float bestBotLimit = -1;
+                //find the bot with the highest limit 
+                for (DataSnapshot botSnapshot : autoBidsSnapshot.getChildren()) {
+                    String botUid = botSnapshot.getKey();
+                    float botMaxLimit = ((Number) botSnapshot.getValue()).floatValue();
+
+                    if (botUid.equals(currentLeadingBidder)) continue; // currentLeading not need to bid again 
+
+                    if (botMaxLimit >= nextRequiredBid && botMaxLimit > bestBotLimit) {
+                        bestBotUid = botUid;
+                        bestBotLimit = botMaxLimit;
+                    }
+                }
+                if (bestBotUid != null) {
+                    System.out.println("[AutoBid] Bot " + bestBotUid + " automatically outbid the current price to $" + nextRequiredBid);
+                    
+                    bid.setHighestOfferedBid(nextRequiredBid);
+                    bid.setLeadingBidderId(bestBotUid);
+                    bidRef.setValueAsync(bid).get();
+                    duelOngoing = true; 
+                } else { //no more bots 
+                	duelOngoing = false;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error during AutoBid duel execution: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }
