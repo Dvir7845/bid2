@@ -72,7 +72,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
 
         Item item = bid.getItem();
 
-        saleId = item.getItemId();
+        saleId = bid.getBidId();
         saleCategory = item.getCategory();
 
         tvItemName.setText(bid.getItem().getItemName());
@@ -114,6 +114,9 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         imageView1 = findViewById(R.id.imageView);
         imageView2 = findViewById(R.id.imageView2);
         imageView3 = findViewById(R.id.imageView3);
+        btnBid.setOnClickListener(this);
+        btnAuto.setOnClickListener(this);
+        btnBuy.setOnClickListener(this);
     }
 
     private void startCountdown(String endDateStr) {
