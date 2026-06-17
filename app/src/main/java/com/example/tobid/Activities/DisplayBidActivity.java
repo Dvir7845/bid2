@@ -89,8 +89,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
 
         // If the user is the creator of the bid
         if(mAuth.getUid().equals(bid.getItem().getSellerUID())){
-            btnBid.setEnabled(false);
-            btnAuto.setEnabled(false);
+           disableBidding();
         }
 
         startCountdown(bid.getEndDate());
@@ -169,6 +168,8 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
     }
 
     public void onClick(View v) {
+        // Check if bid amount is valid
+
         if (v == btnBid) {
             // Check if bid is valid
             String amount = etBidAmount.getText().toString();
@@ -177,7 +178,6 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                 return;
             }
             float bidAmount = Float.parseFloat(amount);
-            //check before request to server to see if bid is valid
             if (bidAmount <= bid.getHighestOfferedBid()) {
                 Toast.makeText(this, "Bid must be higher than current price", Toast.LENGTH_SHORT).show();
                 return;
@@ -195,7 +195,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                         if (response != null && response.isSuccess()) {
                             Toast.makeText(DisplayBidActivity.this, "Bid Placed Successfully!", Toast.LENGTH_SHORT).show();
                             tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bidAmount));
-                            bid.setHighestOfferedBid(bidAmount); // עדכון האובייקט המקומי
+                            bid.setHighestOfferedBid(bidAmount);
                         } else {
                             String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
                             Toast.makeText(DisplayBidActivity.this, "Failed to place bid: " + errorMsg, Toast.LENGTH_LONG).show();
@@ -204,11 +204,70 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                 }
             });
         } else if (v == btnAuto) {
+            String amount = etBidAmount.getText().toString();
+            if (amount.isEmpty()) {
+                Toast.makeText(this, "Please enter your maximum limit for AutoBid", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            float maxAutoLimit = Float.parseFloat(amount);
+            if (maxAutoLimit <= bid.getHighestOfferedBid()) {
+                Toast.makeText(this, "Limit must be higher than current price", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Request request = new Request(Action.AUTO_BID);
+            request.putData("saleId", saleId);
+            request.putData("saleCategory", saleCategory);
+            request.putData("uid", mAuth.getUid());
+            request.putData("maxAutoLimit", maxAutoLimit);
+            ServerConnection.getInstance().sendRequest(request, new ServerCallback() {
+                @Override
+                public void onResponseReceived(Response response) {
+                    runOnUiThread(() -> {
+                        if (response != null && response.isSuccess()) {
+                            Toast.makeText(DisplayBidActivity.this, "AutoBid Activated Successfully!", Toast.LENGTH_SHORT).show();
+                            btnAuto.setText("AutoBid Active");
+                            btnAuto.setEnabled(false);
+                        } else {
+                            String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
+                            Toast.makeText(DisplayBidActivity.this, "Failed to place Autobid: " + errorMsg, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            });
+
+
+
             // TODO: Make auto bid feature in server
-            Toast.makeText(this, "Automatic Bid Activated", Toast.LENGTH_SHORT).show();
+
         } else if (v == btnBuy) {
-            // TODO: Make buy button feature in server
-            Toast.makeText(this, "Item Purchased via Buy It Now!", Toast.LENGTH_SHORT).show();
-        }
-    }
+            float buyNowPrice = bid.getMaximumPrice();
+
+            Request request = new Request(Action.BUY_NOW);
+            request.putData("saleId", saleId);
+            request.putData("saleCategory", saleCategory);
+            request.putData("uid", mAuth.getUid());
+            request.putData("buyNowPrice", buyNowPrice);
+
+            ServerConnection.getInstance().sendRequest(request, new ServerCallback() {
+                @Override
+                public void onResponseReceived(Response response) {
+                    runOnUiThread(() -> {
+                        if (response != null && response.isSuccess()) {
+                            Toast.makeText(DisplayBidActivity.this, "Purchased Successfully!", Toast.LENGTH_SHORT).show();
+                            tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", buyNowPrice));
+                            tvTimer.setText("Auction Closed - Item Purchased!");
+                            disableBidding();
+                        } else {
+                            String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
+                            Toast.makeText(DisplayBidActivity.this, "Failed to Buy Now: " + errorMsg, Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            });
+           }
+        // TODO: Make buy button feature in server
+           }
+
+
 }
