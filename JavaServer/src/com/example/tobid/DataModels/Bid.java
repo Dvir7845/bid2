@@ -1,9 +1,9 @@
 package com.example.tobid.DataModels;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 public class Bid implements Serializable {
+    private String bidId;
     private final Item item;
     private final String startDate;
     private final String endDate;
@@ -86,5 +86,12 @@ public class Bid implements Serializable {
     public void setBidsMade(int bidsMade) {
         this.bidsMade = bidsMade;
     }
-}
 
+    public String getBidId() {
+        return bidId;
+    }
+
+    public void setBidId(String bidId) {
+        this.bidId = bidId;
+    }
+}

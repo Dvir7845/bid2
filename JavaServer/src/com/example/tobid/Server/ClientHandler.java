@@ -74,7 +74,8 @@ public class ClientHandler extends Thread {
                 response = handlePlaceBid(request);
                 return response;
             case BUY_NOW:
-                return new Response(true, "Purchase completed");
+            	response = handleBuyNow(request);
+            	return response;
             case AUTO_BID:
                 return new Response(true, "Auto bid activated");
             case GET_ALL_BIDS_IN_CATEGORY:
@@ -128,6 +129,7 @@ public class ClientHandler extends Thread {
 	                        for (DataSnapshot bidSnapshot : bidsCategorySnapshot.getChildren()) {
 	                            Bid bid = bidSnapshot.getValue(Bid.class);
 	                            if (bid == null) continue;
+	                            bid.setBidId(bidSnapshot.getKey());
 	                            addBidIfValid(request, bid, category, 
 	                            		currentDate, formatter,
 	                            		ongoingBids, futureBids);
@@ -220,6 +222,8 @@ public class ClientHandler extends Thread {
 						if (categorySnapshot.hasChild(bidId)) {
 							DataSnapshot bidSnapshot = categorySnapshot.child(bidId);
 							result[0] = bidSnapshot.getValue(Bid.class);
+							if (result[0] != null)
+								result[0].setBidId(bidSnapshot.getKey());
 							latch.countDown();
 						}
 					}
@@ -355,6 +359,7 @@ public class ClientHandler extends Thread {
 	
 	        // Upload bid to database
 	        Item item = bid.getItem();
+	        bid.setBidId(bidId);
 	        myRef = database.getReference().child("Bids").child(item.getCategory()).child(bidId);
 	        myRef.setValueAsync(bid).get();
 	        System.out.println("Uploaded to db");
@@ -442,10 +447,56 @@ public class ClientHandler extends Thread {
 
 	
     private Response handlePlaceBid(Request request) {
+    
     	try {
-    		
+    		String bidId = (String) request.getData("saleId");
+    		String category = ((String) request.getData("saleCategory")).toUpperCase();
+    		System.out.println("--- DB DEBUG START ---");
+    		//for debuging
+            System.out.println("Looking for Category: [" + category + "]");
+            System.out.println("Looking for Bid ID:   [" + bidId + "]");
+            System.out.println("--- DB DEBUG END ---");
+            //
+            String buyerUid = (String) request.getData("uid");
+            float bidAmount=(float)request.getData("bidAmount");
+    		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+            final Bid[] bidHolder = new Bid[1];
+            DatabaseReference bidRef = database.getReference().child("Bids").child(category).child(bidId);
+            bidRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        bidHolder[0] = snapshot.getValue(Bid.class);
+                    }
+                    latch.countDown();
+                }
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    latch.countDown();
+                }
+            });
+            latch.await();
+            Bid bid = bidHolder[0];
+            if (bid == null) {
+                return new Response(false, "The item could not be found.");
+            }
+            if (bid.getHighestOfferedBid() >= bid.getMaximumPrice()) {
+                return new Response(false, "This item has already been purchased or closed.");
+            }
+            if (buyerUid.equals(bid.getItem().getSellerUID())) {
+                return new Response(false, "Sellers cannot purchase their own items.");
+            }
+            if(bid.getHighestOfferedBid()>=bidAmount)
+            	return new Response(false,"Someone has already placed a higher bid. ");
+            
+            bid.setHighestOfferedBid(bidAmount);
+            bid.setLeadingBidderId(buyerUid);
+            bidRef.setValueAsync(bid).get();
+            
+            
     		
     		return new Response(true, "Bid placed successfully.");
+    		
     	} catch (Exception e) {
     		System.err.print("placing bid failed: " + e.getMessage());
 			e.printStackTrace();
@@ -453,5 +504,54 @@ public class ClientHandler extends Thread {
 			return new Response(false, "Bid not placed.");
     	}
 	}
+    
+    private Response handleBuyNow(Request request) {
+    	try {
+     //get Data from Request
+            String bidId = (String) request.getData("saleId");
+            String category = ((String) request.getData("saleCategory")).toUpperCase();
+            String buyerUid = (String) request.getData("uid");
+            
+            final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+            final Bid[] bidHolder = new Bid[1];
+            DatabaseReference bidRef = database.getReference().child("Bids").child(category).child(bidId);
+            bidRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        bidHolder[0] = snapshot.getValue(Bid.class);
+                    }
+                    latch.countDown();
+                }
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    latch.countDown();
+                }
+            });
+            latch.await();
+            Bid bid = bidHolder[0];
+            if (bid == null) {
+                return new Response(false, "The item could not be found.");
+            }
+            if (bid.getHighestOfferedBid() >= bid.getMaximumPrice()) {
+                return new Response(false, "This item has already been purchased or closed.");
+            }
+            if (buyerUid.equals(bid.getItem().getSellerUID())) {
+                return new Response(false, "Sellers cannot purchase their own items.");
+            }
+            float maxPrice = bid.getMaximumPrice();
+            bid.setHighestOfferedBid(maxPrice);
+            bid.setLeadingBidderId(buyerUid);
+            bidRef.setValueAsync(bid).get();
+            //TODO notification to buyer and seller
+            System.out.println("Item " + bidId + " successfully purchased by " + buyerUid);
+return new Response(true, "Purchase completed successfully!");
+            
+        } catch (Exception e) {
+            System.err.println("Buy It Now process failed: " + e.getMessage());
+            e.printStackTrace();
+            return new Response(false, "Internal server error during purchase: " + e.getMessage());
+        }
+    }
 
 }
