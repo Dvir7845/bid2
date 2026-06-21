@@ -172,4 +172,38 @@ public class UserService {
 			return new Response(false, "Notification removal failed.");
     	}
 	}
+    public Response handleGetUserPhone(Request request) {
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        final String[] phoneHolder = new String[1];
+        String targetUid = (String) request.getData("targetUid");
+        
+        try {
+            database.getReference().child("Users").child(targetUid).child("phoneNumber")
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        if (snapshot.exists()) {
+                            phoneHolder[0] = snapshot.getValue(String.class);
+                        }
+                        latch.countDown();
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError error) {
+                        latch.countDown();
+                    }
+                });
+                
+            latch.await();
+            
+            if (phoneHolder[0] != null) {
+                Response response = new Response(true, "Phone fetched successfully.");
+                response.putData("phone", phoneHolder[0]);
+                return response;
+            } else {
+                return new Response(false, "Phone number not found.");
+            }
+        } catch (Exception e) {
+            return new Response(false, "Failed to fetch phone: " + e.getMessage());
+        }
+    }
 }

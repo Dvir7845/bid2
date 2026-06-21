@@ -10,5 +10,7 @@ public enum Action {
     REGISTER,
     GET_USER_NOTIFICATIONS,
     REMOVE_NOTIFICATION_BY_ID,
-    GET_BID_BY_BID_ID
+    GET_BID_BY_BID_ID,
+    GET_USER_PHONE
+    
 }

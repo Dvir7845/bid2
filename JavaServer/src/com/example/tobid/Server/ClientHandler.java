@@ -69,6 +69,8 @@ public class ClientHandler extends Thread {
                 return UserService.getInstance().handleGetUserNotifications(request);
             case REMOVE_NOTIFICATION_BY_ID:
                 return UserService.getInstance().handleRemoveNotificationById(request);
+            case GET_USER_PHONE:
+            	return UserService.getInstance().handleGetUserPhone(request);
                 
             default:
                 return new Response(false, "Unknown request");
