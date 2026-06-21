@@ -24,6 +24,7 @@ import com.bumptech.glide.Glide;
 import com.example.tobid.Adapters.BidAdapter;
 import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Bid;
+import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
 import com.example.tobid.R;
@@ -182,7 +183,6 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     private void displayOngoingBidsWithFilters() {
         String bidNameFilter = etSearchBar.getText().toString().trim().toLowerCase();
         Object selectedCategory = spCategory.getSelectedItem();
-        String categoryFilter = (selectedCategory != null) ? selectedCategory.toString() : "All";
 
         ServerConnection server = ServerConnection.getInstance();
 
@@ -198,9 +198,13 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
                         futureBids.clear();
 
                         ArrayList<Bid> receivedBids = (ArrayList<Bid>) response.getData("ongoingBids");
+                        receivedBids = filterBidsByName(receivedBids, bidNameFilter);
+
                         ongoingBids.addAll(receivedBids);
 
                         receivedBids = (ArrayList<Bid>) response.getData("futureBids");
+                        receivedBids = filterBidsByName(receivedBids, bidNameFilter);
+
                         futureBids.addAll(receivedBids);
 
                         System.out.println("ongoing" + ongoingBids.toString());
@@ -217,6 +221,25 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
                 });
             }
         });
+    }
+
+    private ArrayList<Bid> filterBidsByName(ArrayList<Bid> receivedBids, String bidNameFilter) {
+        ArrayList<Bid> filteredBids = new ArrayList<>();
+        for (Bid bid : receivedBids) {
+            System.out.println("Bid filter:" + bidNameFilter + " Bid name: " + bid.getItem().getItemName());
+            Item item = bid.getItem();
+            if (item.getSellerUID().equals(mAuth.getUid()))
+                continue;
+            else if (!bidNameFilter.isEmpty()) {
+                String itemName = item.getItemName().toLowerCase();
+                if (!itemName.contains(bidNameFilter))
+                    continue;
+            }
+
+            filteredBids.add(bid);
+        }
+
+        return filteredBids;
     }
 
     private void processAndAddBid(DataSnapshot bidSnapshot, String bidNameFilter) {

@@ -126,20 +126,6 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
 
                 switch (notificationType) {
                     case SIGNUP:  // Send a remove notification request and go to main page
-                        request = new Request(Action.REMOVE_NOTIFICATION_BY_ID);
-                        request.putData("uid", mAuth.getUid());
-                        request.putData("notificationId", notification.getId());
-
-                        server.sendRequest(request, new ServerCallback() {
-                            @Override
-                            public void onResponseReceived(Response response) {
-                                if (response != null && response.isSuccess()) {
-                                    Intent i = new Intent(NotificationsActivity.this, MainPage.class);
-                                    startActivity(i);
-                                }
-                            }
-                        });
-
                         break;
                     case BID_CREATED:
                     case LOST_LEAD_IN_BID:
@@ -150,15 +136,17 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
                         server.sendRequest(request, new ServerCallback() {
                             @Override
                             public void onResponseReceived(Response response) {
-                                if (response != null && response.isSuccess()) {
-                                    Bid bid = (Bid) response.getData("Bid");
-                                    System.out.println(bid);
-                                    Intent i = new Intent(NotificationsActivity.this, DisplayBidActivity.class);
-                                    i.putExtra("Bid", bid);
-                                    startActivity(i);
-                                } else {
-                                    Toast.makeText(NotificationsActivity.this, "Bid retrieval failed.", Toast.LENGTH_SHORT).show();
-                                }
+                                runOnUiThread(() -> {
+                                    if (response != null && response.isSuccess()) {
+                                        Bid bid = (Bid) response.getData("Bid");
+                                        System.out.println(bid);
+                                        Intent i = new Intent(NotificationsActivity.this, DisplayBidActivity.class);
+                                        i.putExtra("Bid", bid);
+                                        startActivity(i);
+                                    } else {
+                                        Toast.makeText(NotificationsActivity.this, "Bid retrieval failed.", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                             }
                         });
                         break;
@@ -166,6 +154,23 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
                         // TODO: Go to chat activity with bid creator
                         break;
                 }
+
+                request = new Request(Action.REMOVE_NOTIFICATION_BY_ID);
+                request.putData("uid", mAuth.getUid());
+                request.putData("notificationId", notification.getId());
+
+                server.sendRequest(request, new ServerCallback() {
+                    @Override
+                    public void onResponseReceived(Response response) {
+                        if (response != null && response.isSuccess()) {
+                            if (notificationType == NotificationType.SIGNUP) {
+                                Intent i = new Intent(NotificationsActivity.this, MainPage.class);
+                                startActivity(i);
+                            }
+                        }
+                    }
+                });
+
             }
         };
         notificationAdapter.setmOnClickListener(onItemClickListener);
