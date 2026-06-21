@@ -13,7 +13,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public class BidService {
     private static BidService instance;
@@ -226,7 +228,7 @@ public class BidService {
             
             bid.setHighestOfferedBid(bid.getMaximumPrice());
             bid.setLeadingBidderId(buyerUid);
-            handleEndedBid(bid, category);
+            handleEndedBid(bid);
             return new Response(true, "Purchase completed successfully!");
             
         } catch (Exception e) {
@@ -301,9 +303,12 @@ public class BidService {
 							result[0] = bidSnapshot.getValue(Bid.class);
 							if (result[0] != null)
 								result[0].setBidId(bidSnapshot.getKey());
-							latch.countDown();
+							
+							latch.countDown(); // If bid found, finish early
 						}
 					}
+					
+					latch.countDown(); // If bid not found, terminate to continue
 				}
 
 				@Override
@@ -332,60 +337,66 @@ public class BidService {
     * Handles all post-auction processing when a bid has expired.
     * Moves data to history nodes, triggers notifications for both parties, and removes active references.
     */
-    protected void handleEndedBid(Bid bid, String category) {
-        if (bid == null) return;
-        
-        String bidId = bid.getBidId();
-        String sellerUid = bid.getItem().getSellerUID();
-        String winnerUid = bid.getLeadingBidderId(); // Can be null or empty if no one placed a bid
-        
-        
-        
-            System.out.println("[BidService] Processing ended bid: " + bidId);
-         // 1. Move bid to Seller's historical archive (Hosted Bids)
-            database.getReference().child("History").child("HostedBids")
-                    .child(sellerUid).child(bidId).setValueAsync(bid);
-         // 2. If there is a valid winner, save it to the Winner's archive (Participated Bids)
-            boolean hasWinner = (winnerUid != null && !winnerUid.isEmpty());
-            if (hasWinner) {
-                database.getReference().child("History").child("ParticipatedBids")
-                        .child(winnerUid).child(bidId).setValueAsync(bid);
-            }
-         // 3. Delete the active auction from the main "Bids" directory to save space and clean UI
-            database.getReference().child("Bids").child(category).child(bidId).setValueAsync(null);
-            
-         // 4. Trigger localized system notifications 
-            if (hasWinner) {
-                // Notify the Seller
-                NotificationService.getInstance().sendNotification(
-                    sellerUid,
-                    NotificationType.BID_WON, // Reuse or add dynamic status
-                    "2Bid",
-                    "2Bid System",
-                    bid.getItem().getStoragePathToImg1(),
-                    "Your auction for '" + bid.getItem().getItemName() + "' ended! Winner ID: " + winnerUid + " at $" + bid.getHighestOfferedBid()
-                );
-             // Notify the Winner
-                NotificationService.getInstance().sendNotification(
-                    winnerUid,
-                    NotificationType.BID_WON,
-                    "2Bid",
-                    "2Bid System",
-                    bid.getItem().getStoragePathToImg1(),
-                    "Congratulations! You won the auction for '" + bid.getItem().getItemName() + "' for $" + bid.getHighestOfferedBid()
-                );
-            } else {
-                // Auction ended with no bidders at all
-                NotificationService.getInstance().sendNotification(
-                    sellerUid,
-                    NotificationType.LOST_LEAD_IN_BID, // Or an AUCTION_EXPIRED status
-                    "2Bid",
-                    "2Bid System",
-                    bid.getItem().getStoragePathToImg1(),
-                    "Your auction for '" + bid.getItem().getItemName() + "' expired with no active bids."
-                );
-            }
-
+    protected void handleEndedBid(Bid bid) {
+    	try {
+    		if (bid == null) return;
+	        
+	        String bidId = bid.getBidId();
+	        String sellerUid = bid.getItem().getSellerUID();
+	        String category = bid.getItem().getCategory();
+	        String winnerUid = bid.getLeadingBidderId(); // Can be null or empty if no one placed a bid
+	        
+	        Map<String, Object> updates = new HashMap<>();
+	        
+	        System.out.println("[BidService] Processing ended bid: " + bidId);
+	        // 1. Move bid to Seller's historical archive (Hosted Bids)
+	        updates.put("/History/HostedBids/" + sellerUid + "/" + bidId, bid);
+	        // 2. If there is a valid winner, save it to the Winner's archive (Participated Bids)
+	        boolean hasWinner = (winnerUid != null && !winnerUid.isEmpty());
+	        if (hasWinner) {
+		        updates.put("/History/ParticipatedBids/" + winnerUid + "/" + bidId, bid);
+	        }
+	        // 3. Delete the active auction from the main "Bids" directory to save space and clean UI
+	        updates.put("/Bids/" + category + "/" + bidId, null);
+	        
+	        // Perform all three updates as an atomic action (either all go through or none)
+	        database.getReference().updateChildrenAsync(updates).get();
+	        
+	        // 4. Trigger localized system notifications 
+	        if (hasWinner) {
+	        	// Notify the Seller
+	        	NotificationService.getInstance().sendNotification(
+	        			sellerUid,
+	        			NotificationType.BID_WON, // Reuse or add dynamic status
+	                    "2Bid",
+	                    "2Bid System",
+	                    bid.getItem().getStoragePathToImg1(),
+	                    "Your auction for '" + bid.getItem().getItemName() + "' ended! Winner ID: " + winnerUid + " at $" + bid.getHighestOfferedBid()
+	        	);
+	        	// Notify the Winner
+	        	NotificationService.getInstance().sendNotification(
+	        			winnerUid,
+	                    NotificationType.BID_WON,
+	                    "2Bid",
+	                    "2Bid System",
+	                    bid.getItem().getStoragePathToImg1(),
+	                    "Congratulations! You won the auction for '" + bid.getItem().getItemName() + "' for $" + bid.getHighestOfferedBid()
+	        	);
+	        } else {
+	        	// Auction ended with no bidders at all
+	        	NotificationService.getInstance().sendNotification(
+	        			sellerUid,
+	                    NotificationType.LOST_LEAD_IN_BID, // Or an AUCTION_EXPIRED status
+	                    "2Bid",
+	                    "2Bid System",
+	                    bid.getItem().getStoragePathToImg1(),
+	                    "Your auction for '" + bid.getItem().getItemName() + "' expired with no active bids."
+	        	);
+	        }
+    	} catch (Exception e) {
+    		System.err.print("Handle ended bid failed: " + e.getMessage());
+			e.printStackTrace();
+    	}
 	}
     
     protected Response handleGetAllBidsInCategory(Request request) {
@@ -466,7 +477,7 @@ public class BidService {
         LocalDate bidEndDate = LocalDate.parse(bid.getEndDate(), formatter);
         
         if (currentDate.isAfter(bidEndDate)) {
-        	handleEndedBid(bid, category);
+        	handleEndedBid(bid);
         } 
         else if (currentDate.isBefore(bidStartDate)) {
         	futureBids.add(bid);
