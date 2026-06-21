@@ -46,30 +46,30 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:gravity="center"
                 android:layout_marginBottom="24dp">
 
                 <ImageView
                     android:id="@+id/imageView"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_margin="4dp"
-                    app:srcCompat="@drawable/default_background" />
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="fitCenter" />
 
                 <ImageView
                     android:id="@+id/imageView2"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_margin="4dp"
-                    app:srcCompat="@drawable/default_background" />
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="fitCenter" />
 
                 <ImageView
                     android:id="@+id/imageView3"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:layout_margin="4dp"
-                    app:srcCompat="@drawable/default_background" />
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:layout_margin="8dp"
+                    android:scaleType="fitCenter" />
             </LinearLayout>
 
             <LinearLayout
@@ -132,6 +132,17 @@
                 android:textColor="#A0A0A0"
                 android:textSize="14sp"
                 android:layout_marginBottom="4dp"/>
+            <TextView
+                android:id="@+id/tvSellerPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textColor="#03DAC6"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:padding="8dp"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/tvDetails"

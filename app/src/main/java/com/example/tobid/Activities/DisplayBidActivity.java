@@ -16,6 +16,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Request;
@@ -35,7 +36,7 @@ import java.util.Date;
 import java.util.Locale;
 
 public class DisplayBidActivity extends AppCompatActivity implements View.OnClickListener{
-    private TextView tvItemName, tvCategory, tvCurrentPrice, tvTimer, tvDetails;
+    private TextView tvItemName, tvCategory, tvCurrentPrice, tvTimer, tvDetails ,tvSellerPhone;
     private EditText etBidAmount;
     private Button btnBid, btnAuto, btnBuy;
     private ImageView imageView1, imageView2, imageView3;
@@ -78,7 +79,34 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         tvItemName.setText(bid.getItem().getItemName());
         tvCategory.setText(bid.getItem().getCategory());
         tvDetails.setText(bid.getItem().getItemDescription());
-        tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bid.getStartingPrice()));
+        tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bid.getHighestOfferedBid()));
+        // Load images
+        com.google.firebase.storage.FirebaseStorage storage = com.google.firebase.storage.FirebaseStorage.getInstance();
+        if (item.getStoragePathToImg1() != null && !item.getStoragePathToImg1().isEmpty()) {
+            storage.getReference(item.getStoragePathToImg1()).getDownloadUrl()
+                    .addOnSuccessListener(uri -> {
+                        Glide.with(DisplayBidActivity.this).load(uri).into(imageView1);
+                    }).addOnFailureListener(e -> {
+                        android.util.Log.e("FirebaseStorage", "Failed to load img1: " + e.getMessage());
+                    });
+        }
+        if (item.getStoragePathToImg2() != null && !item.getStoragePathToImg2().isEmpty()) {
+            storage.getReference(item.getStoragePathToImg2()).getDownloadUrl()
+                    .addOnSuccessListener(uri -> {
+                        Glide.with(DisplayBidActivity.this).load(uri).into(imageView2);
+                    });
+        } else {
+            imageView2.setVisibility(View.GONE);
+        }
+        if (item.getStoragePathToImg3() != null && !item.getStoragePathToImg3().isEmpty()) {
+            storage.getReference(item.getStoragePathToImg3()).getDownloadUrl()
+                    .addOnSuccessListener(uri -> {
+                        Glide.with(DisplayBidActivity.this).load(uri).into(imageView3);
+                    });
+        } else {
+            imageView3.setVisibility(View.GONE);
+        }
+
 
         if (bid.isHasMaximumPrice()) {
             btnBuy.setVisibility(View.VISIBLE);
@@ -92,6 +120,25 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
             tvDetails.setText("This is your auction. You cannot place bids on your own items.");
             tvDetails.setVisibility(View.VISIBLE);
            disableBidding();
+        }
+        // Check if the bid is expired
+        long currentTime = Calendar.getInstance().getTimeInMillis();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("d-M-yyyy", Locale.getDefault());
+        boolean isExpired = false;
+        try {
+            Date endDate = dateFormat.parse(bid.getEndDate());
+            if (endDate != null && currentTime >= endDate.getTime()) {
+                isExpired = true;
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        // Check if the user is the seller or the leading bidder
+        String currentUid = mAuth.getUid();
+        if ((isExpired || bid.getHighestOfferedBid() >= bid.getMaximumPrice()) && currentUid != null) {
+            if (currentUid.equals(bid.getItem().getSellerUID()) || currentUid.equals(bid.getLeadingBidderId())) {
+                fetchAndShowSellerPhone();
+            }
         }
 
         startCountdown(bid.getEndDate());
@@ -109,6 +156,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         tvCurrentPrice = findViewById(R.id.tvCurrentPrice);
         tvTimer = findViewById(R.id.tvTimer);
         tvDetails = findViewById(R.id.tvDetails);
+        tvSellerPhone = findViewById(R.id.tvSellerPhone);
         etBidAmount = findViewById(R.id.etBidAmount);
         btnBid = findViewById(R.id.btnBid);
         btnAuto = findViewById(R.id.btnAuto);
@@ -145,11 +193,16 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                         public void onFinish() {
                             tvTimer.setText("Auction Ended!");
                             disableBidding();
+                            String currentUid = mAuth.getUid();
+                            if (currentUid != null && (currentUid.equals(bid.getItem().getSellerUID()) || currentUid.equals(bid.getLeadingBidderId()))) {
+                                fetchAndShowSellerPhone();
+                            }
                         }
                     }.start();
                 } else {
                     tvTimer.setText("Auction Ended!");
                     disableBidding();
+
                 }
             }
         } catch (ParseException e) {
@@ -243,7 +296,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
 
 
 
-            // TODO: Make auto bid feature in server
+
 
         } else if (v == btnBuy) {
             float buyNowPrice = bid.getMaximumPrice();
@@ -263,6 +316,11 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                             tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", buyNowPrice));
                             tvTimer.setText("Auction Closed - Item Purchased!");
                             disableBidding();
+                            // Check if the user is the seller or the leading bidder
+                            String currentUid = mAuth.getUid();
+                            if (currentUid != null && (currentUid.equals(bid.getItem().getSellerUID()) || currentUid.equals(mAuth.getUid()))) {
+                                fetchAndShowSellerPhone();
+                            }
                         } else {
                             String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
                             Toast.makeText(DisplayBidActivity.this, "Failed to Buy Now: " + errorMsg, Toast.LENGTH_LONG).show();
@@ -271,8 +329,33 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                 }
             });
            }
-        // TODO: Make buy button feature in server
+
            }
+
+    private void fetchAndShowSellerPhone() {
+        String sellerUid = bid.getItem().getSellerUID();
+
+
+        Request request = new Request(Action.GET_USER_PHONE);
+        request.putData("targetUid", sellerUid);
+
+        ServerConnection.getInstance().sendRequest(request, new ServerCallback() {
+            @Override
+            public void onResponseReceived(Response response) {
+                runOnUiThread(() -> {
+                    if (response != null && response.isSuccess()) {
+                        String phone = (String) response.getData("phone");
+                        if (phone != null && !phone.isEmpty()) {
+                            tvSellerPhone.setText("Contact Seller: " + phone);
+                            tvSellerPhone.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        Toast.makeText(DisplayBidActivity.this, "Could not fetch seller contact info", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
 
 
 }
