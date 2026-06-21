@@ -89,6 +89,8 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
 
         // If the user is the creator of the bid
         if(mAuth.getUid().equals(bid.getItem().getSellerUID())){
+            tvDetails.setText("This is your auction. You cannot place bids on your own items.");
+            tvDetails.setVisibility(View.VISIBLE);
            disableBidding();
         }
 

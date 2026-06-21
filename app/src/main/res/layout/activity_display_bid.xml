@@ -142,6 +142,16 @@
                 android:textSize="16sp"
                 android:layout_marginBottom="24dp"/>
 
+            <TextView
+                android:id="@+id/tvSellerNotice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:textColor="#FF8800"
+                android:textStyle="bold"
+                android:padding="8dp"
+                android:visibility="gone" />
+
             <EditText
                 android:id="@+id/etBidAmount"
                 android:layout_width="match_parent"
