@@ -523,5 +523,72 @@ public class BidService {
         latch.await();
         return bidHolder[0];
     }
+
+	public Response handleGetPastBids(Request request) {
+		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(2);
+		ArrayList<Bid> pastHostedBids = new ArrayList<>();
+		ArrayList<Bid> pastParticipatedBids = new ArrayList<>();
+		try {
+			String uid = (String) request.getData("uid");
+			
+			DatabaseReference historyRef = database.getReference().child("History");
+			historyRef.child("HostedBids").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					if (snapshot.exists()) {
+						for (DataSnapshot bidSnapshot : snapshot.getChildren()) {
+							Bid bid = bidSnapshot.getValue(Bid.class);
+							pastHostedBids.add(bid);
+						}
+					}
+					latch.countDown();
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+			});
+			
+			historyRef.child("ParticipatedBids").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					if (snapshot.exists()) {
+						for (DataSnapshot bidSnapshot : snapshot.getChildren()) {
+							Bid bid = bidSnapshot.getValue(Bid.class);
+							pastParticipatedBids.add(bid);
+						}
+					}
+					
+					latch.countDown();
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+			});
+			latch.await();
+			
+			Response response = new Response(true, "Fetch past bids successful");
+			response.putData("hostedBids", pastHostedBids);
+			response.putData("participatingBids", pastParticipatedBids);
+			System.out.println(pastHostedBids.toString() + " " + pastParticipatedBids.toString());
+			return response;
+			
+    	} catch (Exception e) {
+    		System.err.print("Get bid request failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Get bid request failed.");
+    	}
+	}
+
+	public Response handleGetActiveBids(Request request) {
+		System.out.println("Need to implement GET_ACTIVE_BIDS!");
+		return null;
+	}
     
 }
