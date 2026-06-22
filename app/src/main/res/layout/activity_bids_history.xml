@@ -24,12 +24,12 @@
             android:layout_marginStart="10dp"/>
 
         <Switch
-            android:id="@+id/switchDisplayOngoingOrEndedBiddings"
+            android:id="@+id/switchDisplayOngoingOrEndedBids"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginStart="32dp"
-            android:text="Displaying ongoing biddings"
+            android:text="Displaying ongoing bids"
             android:textAlignment="center"
             android:textSize="18sp"
             android:textColor="@color/white"
@@ -55,18 +55,18 @@
         android:layout_weight="1"/>
 
     <TextView
-        android:id="@+id/tvMyBidsText"
+        android:id="@+id/tvParticipatingBidsText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@color/white"
         android:layout_weight="0"
         android:textSize="25sp"
-        android:text="My Bids:"
+        android:text="Participating Bids:"
         android:layout_marginStart="10dp"
         android:layout_marginTop="8dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvMyBids"
+        android:id="@+id/rvParticipatingBids"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"

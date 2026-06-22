@@ -3,15 +3,39 @@ package com.example.tobid.Activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.tobid.Adapters.BidAdapter;
+import com.example.tobid.DataModels.Action;
+import com.example.tobid.DataModels.Bid;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
 import com.example.tobid.R;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
+import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.ArrayList;
 
 public class BidsHistoryActivity extends AppCompatActivity implements View.OnClickListener {
+    private FirebaseAuth mAuth;
     private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
+    private TextView tvHostedBidsText, tvParticipatingBidsText;
+    private Switch switchDisplayOngoingOrEndedBids;
+    private RecyclerView rvHostedBids, rvParticipatingBids;
+    private BidAdapter hostedBidsAdapter, participatingBidsAdapter;
+    private View.OnClickListener hostedBidsOnClickListener, participatingBidsOnClickListener;
+    private ArrayList<Bid> hostedBids, participatingBids;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,12 +43,122 @@ public class BidsHistoryActivity extends AppCompatActivity implements View.OnCli
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_bids_history);
 
+        mAuth = FirebaseAuth.getInstance();
+
         ibHomeButton = findViewById(R.id.ibHomeButton);
         ibHomeButton.setOnClickListener(this);
         ibNotifications = findViewById(R.id.ibNotifications);
         ibNotifications.setOnClickListener(this);
         ibBiddingHistory = findViewById(R.id.ibBiddingHistory);
         ibBiddingHistory.setOnClickListener(this);
+
+        tvHostedBidsText = findViewById(R.id.tvHostedBidsText);
+        tvParticipatingBidsText = findViewById(R.id.tvParticipatingBidsText);
+
+        initializeBidDisplayVariables();
+
+        switchDisplayOngoingOrEndedBids = findViewById(R.id.switchDisplayOngoingOrEndedBids);
+        switchDisplayOngoingOrEndedBids.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    // Display past hosted and participated bids
+                    tvHostedBidsText.setText("Previously Hosted Bids:");
+                    tvParticipatingBidsText.setText("Previously Participated Bids:");
+                    switchDisplayOngoingOrEndedBids.setText("Displaying past bids");
+                } else {
+                    // Display current hosted and participating bids
+                    tvHostedBidsText.setText("Hosted Bids:");
+                    tvParticipatingBidsText.setText("Participating Bids:");
+                    switchDisplayOngoingOrEndedBids.setText("Displaying ongoing bids");
+                }
+
+                displayBids(isChecked);
+            }
+        });
+
+
+    }
+
+    private void initializeBidDisplayVariables() {
+        hostedBids = new ArrayList<>();
+        participatingBids = new ArrayList<>();
+
+        hostedBidsOnClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int position = ((RecyclerView.ViewHolder) view.getTag()).getAdapterPosition();
+                Bid bid = hostedBids.get(position);
+                Intent i = new Intent(BidsHistoryActivity.this, DisplayBidActivity.class);
+                i.putExtra("Bid", bid);
+                startActivity(i);
+            }
+        };
+        participatingBidsOnClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int position = ((RecyclerView.ViewHolder) view.getTag()).getAdapterPosition();
+                Bid bid = participatingBids.get(position);
+                Intent i = new Intent(BidsHistoryActivity.this, DisplayBidActivity.class);
+                i.putExtra("Bid", bid);
+                startActivity(i);
+            }
+        };
+
+        hostedBidsAdapter = new BidAdapter(hostedBids);
+        hostedBidsAdapter.setmOnClickListener(hostedBidsOnClickListener);
+
+        participatingBidsAdapter = new BidAdapter(participatingBids);
+        participatingBidsAdapter.setmOnClickListener(participatingBidsOnClickListener);
+
+        rvHostedBids = findViewById(R.id.rvHostedBids);
+        rvParticipatingBids = findViewById(R.id.rvParticipatingBids);
+
+        rvHostedBids.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rvHostedBids.setAdapter(hostedBidsAdapter);
+
+        rvParticipatingBids.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        rvParticipatingBids.setAdapter(participatingBidsAdapter);
+    }
+
+    private void displayBids(boolean isChecked) {
+        Request request;
+        if (isChecked) {  // Display past hosted and participated bids
+            request = new Request(Action.GET_PAST_BIDS);
+        } else {  // Display current hosted and participating bids
+            // TODO: Implement this (will require adding an active bids per user folder)
+           request = new Request(Action.GET_ACTIVE_BIDS);
+        }
+        request.putData("uid", mAuth.getUid());
+
+        ServerConnection server = ServerConnection.getInstance();
+        server.sendRequest(request, new ServerCallback() {
+            @Override
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            hostedBids.clear();
+                            participatingBids.clear();
+
+                            ArrayList<Bid> receivedBids = (ArrayList<Bid>) response.getData("hostedBids");
+                            hostedBids.addAll(receivedBids);
+
+                            receivedBids = (ArrayList<Bid>) response.getData("participatingBids");
+                            participatingBids.addAll(receivedBids);
+
+                            hostedBidsAdapter.notifyDataSetChanged();
+                            participatingBidsAdapter.notifyDataSetChanged();
+                        } else {
+                            Toast.makeText(BidsHistoryActivity.this, "Unable to fetch bids to display from the server", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+
+
     }
 
     @Override

@@ -242,19 +242,6 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         return filteredBids;
     }
 
-    private void processAndAddBid(DataSnapshot bidSnapshot, String bidNameFilter) {
-        Bid bid = bidSnapshot.getValue(Bid.class);
-        if (bid == null) return;
-        else if (bid.getItem().getSellerUID().equals(mAuth.getUid())) return;
-        else if (!bidNameFilter.isEmpty()) {
-            String itemName = bid.getItem().getItemName().toLowerCase();
-            if (!itemName.contains(bidNameFilter))
-                return;
-        }
-        ongoingBids.add(bid);
-        System.out.println(ongoingBids);
-    }
-
     private void fetchAndDisplayCategories() {
         myRef = database.getReference();
         myRef.child("Categories").addValueEventListener(new ValueEventListener() {
