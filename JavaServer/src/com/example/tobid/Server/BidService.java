@@ -57,13 +57,23 @@ public class BidService {
                 return new Response(false, "Bid is too low. For this price category, the minimum bid must be at least $" + minimumAllowedBid);
             }
             
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("highestOfferedBid", bidAmount);
+            updates.put("leadingBidderId", buyerUid);
+            
+            updates.put("participants/" + buyerUid, buyerUid);
+            
             // Update object states
             bid.setHighestOfferedBid(bidAmount);
             bid.setLeadingBidderId(buyerUid);
             
             // Commit changes to Firebase
             DatabaseReference bidRef = database.getReference().child("Bids").child(category).child(bidId);
-            bidRef.setValueAsync(bid).get();
+            bidRef.updateChildrenAsync(updates).get();
+            //bidRef.setValueAsync(bid).get();
+            
+            // Mark user as a participant
+            //bidRef.child("participants").child(buyerUid).setValueAsync(buyerUid).get();
             
             NotificationService.getInstance().sendNotification(
                     bid.getItem().getSellerUID(),
@@ -98,6 +108,12 @@ public class BidService {
             DatabaseReference autoBidRef = database.getReference()
                     .child("AutoBids").child(category).child(bidId).child(uid);
             autoBidRef.setValueAsync(maxAutoLimit).get();
+            
+            // Mark user as a participant
+            DatabaseReference participatingRef = database.getReference().child("Bids")
+            		.child(category).child(bidId).child("participants");
+            participatingRef.child(uid).setValueAsync(uid).get();
+            
             System.out.println("AutoBid activated for user " + uid + " with limit $" + maxAutoLimit);
 
             // 2. Fetch the current state of the bid from Firebase synchronously using fetchBidSync
@@ -193,13 +209,14 @@ public class BidService {
                 if (bestBotUid != null) {
                     System.out.println("[AutoBid] Bot " + bestBotUid + " automatically outbid the current price to $" + nextRequiredBid);
                     
-                    bid.setHighestOfferedBid(nextRequiredBid);
-                    bid.setLeadingBidderId(bestBotUid);
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("highestOfferedBid", nextRequiredBid);
+                    updates.put("leadingBidderId", bestBotUid);
                     
                     // Commit the new bid back to Firebase synchronously
                     DatabaseReference bidRef = database.getReference().child("Bids").child(category).child(bidId);
-                    bidRef.setValueAsync(bid).get();
-                    
+                    bidRef.updateChildrenAsync(updates).get();
+
                     // Keep the duel ongoing for another cycle to check for other reacting bots
                     duelOngoing = true; 
                 } else { 
@@ -225,6 +242,11 @@ public class BidService {
             if (bid == null) return new Response(false, "The item could not be found.");
             if (bid.getHighestOfferedBid() >= bid.getMaximumPrice()) return new Response(false, "This item has already been purchased.");
             if (buyerUid.equals(bid.getItem().getSellerUID())) return new Response(false, "Sellers cannot purchase their own items.");
+            
+            // Mark user as a participant
+            DatabaseReference participatingRef = database.getReference().child("Bids")
+            		.child(category).child(bidId).child("participants");
+            participatingRef.child(buyerUid).setValueAsync(buyerUid).get();
             
             bid.setHighestOfferedBid(bid.getMaximumPrice());
             bid.setLeadingBidderId(buyerUid);
@@ -587,8 +609,53 @@ public class BidService {
 	}
 
 	public Response handleGetActiveBids(Request request) {
-		System.out.println("Need to implement GET_ACTIVE_BIDS!");
-		return null;
+		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+		ArrayList<Bid> participatingBids = new ArrayList<>();
+		ArrayList<Bid> hostedBids = new ArrayList<>();
+		try {
+			String uid = (String) request.getData("uid");
+
+			DatabaseReference bidsRef = database.getReference().child("Bids");
+			bidsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+	
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
+						for (DataSnapshot bidSnapshot : categorySnapshot.getChildren()) {
+							Bid bid = bidSnapshot.getValue(Bid.class);
+							if (bid == null) continue;
+							String hostUid = bid.getItem().getSellerUID();
+							
+							if (uid.equals(hostUid)) {
+								hostedBids.add(bid);
+							}
+							else if (bidSnapshot.child("participants").child(uid).exists()) {
+								participatingBids.add(bid);
+							}
+						}
+					}
+					latch.countDown();
+					
+				}
+	
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+			});
+			
+			latch.await();
+			
+			Response response = new Response(true, "Ongoing bids fetched successfully");
+			response.putData("hostedBids", hostedBids);
+			response.putData("participatingBids", participatingBids);
+			
+			return response;
+		} catch (Exception e) {
+			System.err.print("Get active bids failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Get active bids failed.");
+		}
 	}
-    
 }
