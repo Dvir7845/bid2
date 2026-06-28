@@ -26,8 +26,6 @@ import com.example.tobid.R;
 import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,8 +39,6 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
     private Button btnBid, btnAuto, btnBuy;
     private ImageView imageView1, imageView2, imageView3;
     private Bid bid;
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
     private FirebaseAuth mAuth;
     private String saleId, saleCategory;
 
@@ -57,8 +53,6 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         initViews();
 
         // Initialize Firebase components
-        database = FirebaseDatabase.getInstance();
-        myRef = database.getReference();
         mAuth = FirebaseAuth.getInstance();
 
         // Get bid data

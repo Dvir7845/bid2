@@ -25,8 +25,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * The SignInPage activity handles user authentication via Firebase Authentication.
@@ -40,8 +38,6 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
     private Button btnSignIn, btnForgotPassword, btnSignup;
 
     // Firebase instances
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
     private FirebaseAuth mAuth;
 
     /**
@@ -73,8 +69,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
 
-        // Initialize FirebaseDatabase and FirebaseAuth
-        database = FirebaseDatabase.getInstance();
+        // Initialize FirebaseAuth
         mAuth = FirebaseAuth.getInstance();
 
         // Initialize UI components

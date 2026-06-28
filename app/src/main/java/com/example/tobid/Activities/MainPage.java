@@ -243,23 +243,29 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     }
 
     private void fetchAndDisplayCategories() {
-        myRef = database.getReference();
-        myRef.child("Categories").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                GenericTypeIndicator<ArrayList<String>> type = new GenericTypeIndicator<ArrayList<String>>() {};
-                ArrayList<String> categories = snapshot.getValue(type);
-                categories.add(0, "All"); // Add all category when displaying for no category filter
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_CATEGORIES);
 
-                ArrayAdapter<String> spinnerAdapter =
-                        new ArrayAdapter<>(MainPage.this, android.R.layout.simple_spinner_item, categories);
-                spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-                spCategory.setAdapter(spinnerAdapter);
-            }
-
+        server.sendRequest(request, new ServerCallback() {
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(TAG, "Failed to read categories", error.toException());
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            ArrayList<String> categories = (ArrayList<String>) response.getData("categories");
+
+                            categories.add(0, "All"); // Add all category when displaying for no category filter
+
+                            ArrayAdapter<String> spinnerAdapter =
+                                    new ArrayAdapter<>(MainPage.this, android.R.layout.simple_spinner_item, categories);
+                            spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+                            spCategory.setAdapter(spinnerAdapter);
+                        } else {
+                            Toast.makeText(MainPage.this, "Category fetch failed", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
             }
         });
     }

@@ -24,10 +24,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import org.jspecify.annotations.NonNull;
 
@@ -44,10 +40,6 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
 
     // Firebase instances
     private FirebaseAuth mAuth;
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
-    private FirebaseStorage storage;
-    private StorageReference storageRef;
 
     /**
      * Called when the activity is first created.
@@ -61,9 +53,7 @@ public class SignUpActivity extends AppCompatActivity implements View.OnClickLis
         setContentView(R.layout.activity_sign_up);
 
         // Initialize Firebase instances
-        database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
-        storage = FirebaseStorage.getInstance();
 
         // Initialize UI elements
         etEmail = findViewById(R.id.etEmail);

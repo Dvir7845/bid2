@@ -16,8 +16,7 @@ import com.bumptech.glide.Glide;
 import com.example.tobid.DataModels.Bid;
 import com.example.tobid.DataModels.Item;
 import com.example.tobid.R;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -62,10 +61,6 @@ public class BidAdapter extends RecyclerView.Adapter<BidAdapter.BidViewHolder> {
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onBindViewHolder(@NonNull BidViewHolder holder, int position) {
-        // Get the Firebase database instance
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef;
-
         // Get the current bid
         Bid bid = bids.get(position);
 

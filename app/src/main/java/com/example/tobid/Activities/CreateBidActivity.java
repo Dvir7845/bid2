@@ -33,14 +33,6 @@ import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,12 +43,7 @@ import java.util.Calendar;
 public class CreateBidActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int PICK_IMAGES_REQUEST = 1;
     private ArrayList<Uri> imageUris = new ArrayList<>();
-
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
     private FirebaseAuth mAuth;
-    private FirebaseStorage storage;
-    private StorageReference storageRef;
 
     private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
 
@@ -77,13 +64,8 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_create_bid);
 
-        // Initialize firebase
-        database = FirebaseDatabase.getInstance();
-        myRef = database.getReference();
-
+        // Initialize auth
         mAuth = FirebaseAuth.getInstance();
-
-        storage = FirebaseStorage.getInstance();
 
         // Initialize navigation bar buttons
         ibHomeButton = findViewById(R.id.ibHomeButton);
@@ -135,25 +117,29 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
         // Get categories from db and display in spinner
         spCategory = findViewById(R.id.spCategory);
 
-        myRef.child("Categories").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                GenericTypeIndicator<ArrayList<String>> type = new GenericTypeIndicator<ArrayList<String>>() {};
-                ArrayList<String> categories = snapshot.getValue(type);
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_CATEGORIES);
 
-                ArrayAdapter<String> spinnerAdapter =
-                        new ArrayAdapter<>(CreateBidActivity.this, android.R.layout.simple_spinner_item, categories);
-                spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-                spCategory.setAdapter(spinnerAdapter);
-            }
-
+        server.sendRequest(request, new ServerCallback() {
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.w(TAG, "Failed to read categories", error.toException());
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            ArrayList<String> categories = (ArrayList<String>) response.getData("categories");
+
+                            ArrayAdapter<String> spinnerAdapter =
+                                    new ArrayAdapter<>(CreateBidActivity.this, android.R.layout.simple_spinner_item, categories);
+                            spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+                            spCategory.setAdapter(spinnerAdapter);
+                        } else {
+                            Toast.makeText(CreateBidActivity.this, "Category fetch failed", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
             }
         });
-
-
     }
 
     @Override
