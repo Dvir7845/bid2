@@ -32,6 +32,41 @@ public class BidService {
         return instance;
     }
     
+    protected Response handleGetCategories(Request request) {
+    	final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+    	
+    	ArrayList<String> categories = new ArrayList<>();
+    	try {
+    		DatabaseReference categoriesRef = database.getReference().child("Categories");
+    		categoriesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
+						categories.add(categorySnapshot.getValue(String.class));
+					}
+					
+					latch.countDown();
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+    		});
+    		
+    		latch.await();
+    		
+    		Response response = new Response(true, "Categories fetched successfuly");
+    		response.putData("categories", categories);
+    		
+    		return response;
+    	} catch (Exception e) {
+            System.err.print("fetching categories failed: " + e.getMessage());
+            e.printStackTrace();
+            return new Response(false, "fetching categories failed");
+    	}
+    }
     
     protected Response handlePlaceBid(Request request) {
         try {

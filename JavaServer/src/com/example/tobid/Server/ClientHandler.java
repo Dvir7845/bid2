@@ -47,6 +47,8 @@ public class ClientHandler extends Thread {
         
         switch (request.getAction()) {
             // ==================== BID SERVICE ROUTING ====================
+        	case GET_CATEGORIES:
+        		return BidService.getInstance().handleGetCategories(request);
             case PLACE_BID:
                 return BidService.getInstance().handlePlaceBid(request);
             case BUY_NOW:

@@ -1,6 +1,7 @@
 package com.example.tobid.DataModels;
 
 public enum Action {
+	GET_CATEGORIES,
     PLACE_BID,
     BUY_NOW,
     AUTO_BID,
