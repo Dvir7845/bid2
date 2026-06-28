@@ -57,6 +57,9 @@ public class BidsHistoryActivity extends AppCompatActivity implements View.OnCli
 
         initializeBidDisplayVariables();
 
+        // Display ongoing bids
+        displayBids(false);
+
         switchDisplayOngoingOrEndedBids = findViewById(R.id.switchDisplayOngoingOrEndedBids);
         switchDisplayOngoingOrEndedBids.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -122,6 +125,9 @@ public class BidsHistoryActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void displayBids(boolean isChecked) {
+        hostedBids.clear();
+        participatingBids.clear();
+
         Request request;
         if (isChecked) {  // Display past hosted and participated bids
             request = new Request(Action.GET_PAST_BIDS);
@@ -139,9 +145,6 @@ public class BidsHistoryActivity extends AppCompatActivity implements View.OnCli
                     @Override
                     public void run() {
                         if (response != null && response.isSuccess()) {
-                            hostedBids.clear();
-                            participatingBids.clear();
-
                             ArrayList<Bid> receivedBids = (ArrayList<Bid>) response.getData("hostedBids");
                             hostedBids.addAll(receivedBids);
 
