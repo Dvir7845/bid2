@@ -6,6 +6,7 @@ import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.NotificationType;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.database.*;
 
@@ -691,6 +692,43 @@ public class BidService {
 			e.printStackTrace();
 			
 			return new Response(false, "Get active bids failed.");
+		}
+	}
+	
+	public Response handleGetImageByPath(Request request) {
+		try {
+			String imagePath = (String) request.getData("imagePath");
+			
+			FirebaseStorageService storageService = FirebaseStorageService.getInstance();
+	        Bucket bucket = storageService.getBucket();
+			Blob imageBlob = bucket.get(imagePath);
+			if (imageBlob == null) {
+				return new Response(false, "Image not found.");
+			}
+			
+			String downloadToken = imageBlob.getMetadata().get("firebaseStorageDownloadTokens");
+			if (downloadToken == null) {
+	            return new Response(false, "No download token found for this image.");
+			}
+			
+	        String encodedPath = imagePath.replace("/", "%2F");
+	        String downloadUrl = String.format(
+	                "https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
+	                bucket.getName(), 
+	                encodedPath, 
+	                downloadToken
+	            );
+	        
+			Response response = new Response(true, "Get image by path successful");
+			
+			response.putData("imageUrl", downloadUrl);
+			
+			return response;
+		} catch (Exception e) {
+			System.err.print("Get image by path failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Get image by path failed.");
 		}
 	}
 }

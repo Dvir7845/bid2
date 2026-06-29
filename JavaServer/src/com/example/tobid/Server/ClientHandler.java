@@ -65,6 +65,8 @@ public class ClientHandler extends Thread {
                 return BidService.getInstance().handleCreateBid(request);
             case GET_BID_BY_BID_ID:
                 return BidService.getInstance().handleGetBidById(request);
+            case GET_IMAGE_BY_PATH:
+            	return BidService.getInstance().handleGetImageByPath(request);
 
             // ==================== USER SERVICE ROUTING ====================
             case LOGIN:
