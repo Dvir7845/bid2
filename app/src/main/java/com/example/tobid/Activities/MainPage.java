@@ -64,18 +64,11 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     private View.OnClickListener ongoingBidsOnItemClickListener, futureBidsOnItemClickListener;
     private BidAdapter ongoingBidsAdapter, futureBidsAdapter;
 
-
-    // Method to reload user data when the app is resumed
-    @Override
-    public void onStart() {
-        super.onStart();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+    // Security variables to prevent infinite Spinner selection loops
+    private boolean isSpinnerInitializing = true;
+    private int lastSelectedCategoryPosition = -1;
 
 
-        if (currentUser != null) {
-            currentUser.reload();
-        }
-    }
 
     // Method to initialize the activity and UI elements
     @Override
@@ -169,7 +162,22 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         spCategory.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                // Refresh bids filter
+                // Safety Check 1: Handle the automatic trigger when setting the adapter for the first time
+                if (isSpinnerInitializing) {
+                    isSpinnerInitializing = false;
+                    lastSelectedCategoryPosition = position;
+                    // We STILL want to fetch bids the first time the app opens!
+                    displayOngoingBidsWithFilters();
+                    return;
+                }
+
+                // Safety Check 2: Ignore if Android randomly triggers the same position due to UI layout changes
+                if (lastSelectedCategoryPosition == position) {
+                    return;
+                }
+
+                // Update the tracked position and fetch new bids based on user selection
+                lastSelectedCategoryPosition = position;
                 displayOngoingBidsWithFilters();
             }
 
@@ -260,6 +268,7 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
                             ArrayAdapter<String> spinnerAdapter =
                                     new ArrayAdapter<>(MainPage.this, android.R.layout.simple_spinner_item, categories);
                             spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+                            isSpinnerInitializing = true;
                             spCategory.setAdapter(spinnerAdapter);
                         } else {
                             Toast.makeText(MainPage.this, "Category fetch failed", Toast.LENGTH_SHORT).show();
@@ -276,8 +285,14 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                String imagePath = dataSnapshot.getValue(String.class);
+
+                // Safety Check: Stop execution if the user doesn't have an image path in the database
+                if (imagePath == null || imagePath.trim().isEmpty()) {
+                    return;
+                }
                 FirebaseStorage storage = FirebaseStorage.getInstance();
-                StorageReference storageRef = storage.getReference(dataSnapshot.getValue(String.class));
+                StorageReference storageRef = storage.getReference(imagePath);
 
                 storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
                     Glide.with(MainPage.this).load(uri).into(ivPfp);

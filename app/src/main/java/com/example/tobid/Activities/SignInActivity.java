@@ -98,6 +98,7 @@ public class SignInActivity extends AppCompatActivity implements View.OnClickLis
             // Navigate to the sign-up page
             Intent i = new Intent(this, SignUpActivity.class);
             startActivity(i);
+            finish(); // Finish the current activity to prevent going back to it
         }
 
         if (v == btnForgotPassword) {
