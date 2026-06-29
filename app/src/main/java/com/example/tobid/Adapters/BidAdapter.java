@@ -13,12 +13,15 @@ import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Bid;
 import com.example.tobid.DataModels.Item;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
 import com.example.tobid.R;
 
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 
 import java.util.ArrayList;
 
@@ -73,21 +76,34 @@ public class BidAdapter extends RecyclerView.Adapter<BidAdapter.BidViewHolder> {
         double currentPrice = Math.max(bid.getHighestOfferedBid(), bid.getStartingPrice());
         holder.tvCurrentPrice.setText(String.valueOf(currentPrice));
 
-        // Access Firebase Storage to fetch the first image of the bid
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        if (item.getStoragePathToImg1() == null) {
+        // Fetch and display the first (preview) image of the bid
+        String imagePath = item.getStoragePathToImg1();
+        if (imagePath == null) {
             Log.e("BidAdapter", "Bid image is null.");
             return;
         }
-        StorageReference storageRef = storage.getReference(item.getStoragePathToImg1());
-        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-            // Use Glide to load the image into the ImageView
-            Glide.with(holder.ivImg.getContext())
-                    .load(uri)
-                    .into(holder.ivImg);
-        }).addOnFailureListener(exception -> {
-            // Log any errors that occur while fetching the download URL
-            Log.e("FirebaseStorage", "Failed to get download URL: " + exception.getMessage());
+
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_IMAGE_BY_PATH);
+        request.putData("imagePath", imagePath);
+
+        server.sendRequest(request, new ServerCallback() {
+            @Override
+            public void onResponseReceived(Response response) {
+                if (response != null && response.isSuccess()) {
+                    //byte[] imageBytes = (byte[]) response.getData("imageBytes");
+                    String imageUrl = (String) response.getData("imageUrl");
+                    // Use Glide to load the image into the ImageView
+                    holder.ivImg.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Glide.with(holder.ivImg.getContext())
+                                    .load(imageUrl)
+                                    .into(holder.ivImg);
+                        }
+                    });
+                }
+            }
         });
     }
 

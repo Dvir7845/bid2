@@ -9,6 +9,7 @@ public enum Action {
     GET_PAST_BIDS,
     GET_ACTIVE_BIDS, // Get the users created and participating bids
     CREATE_BID,
+    GET_IMAGE_BY_PATH,
     LOGIN,
     REGISTER,
     GET_USER_NOTIFICATIONS,
