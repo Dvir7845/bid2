@@ -73,6 +73,10 @@ public class ClientHandler extends Thread {
                 return UserService.getInstance().handleLogin(request);
             case REGISTER:
                 return UserService.getInstance().handleRegister(request);
+            case GET_USER_BY_ID:
+            	return UserService.getInstance().handleGetUserById(request);
+            case CHANGE_USERNAME_AND_PICTURE:
+            	return UserService.getInstance().handleChangeUsernameAndPicture(request);
             case GET_USER_NOTIFICATIONS:
                 return UserService.getInstance().handleGetUserNotifications(request);
             case REMOVE_NOTIFICATION_BY_ID:

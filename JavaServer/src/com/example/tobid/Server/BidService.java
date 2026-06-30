@@ -698,6 +698,7 @@ public class BidService {
 	public Response handleGetImageByPath(Request request) {
 		try {
 			String imagePath = (String) request.getData("imagePath");
+			System.out.println(imagePath);
 			
 			FirebaseStorageService storageService = FirebaseStorageService.getInstance();
 	        Bucket bucket = storageService.getBucket();

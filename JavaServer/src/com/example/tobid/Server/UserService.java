@@ -172,7 +172,7 @@ public class UserService {
 			return new Response(false, "Notification removal failed.");
     	}
 	}
-    public Response handleGetUserPhone(Request request) {
+    protected Response handleGetUserPhone(Request request) {
         final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
         final String[] phoneHolder = new String[1];
         String targetUid = (String) request.getData("targetUid");
@@ -206,4 +206,81 @@ public class UserService {
             return new Response(false, "Failed to fetch phone: " + e.getMessage());
         }
     }
+
+	protected Response handleGetUserById(Request request) {
+		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+		try {
+			String uid = (String) request.getData("uid");
+			
+			final User[] user = new User[1];
+			database.getReference().child("Users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					// TODO Auto-generated method stub
+					if (snapshot.exists()) {
+						User userInstance = snapshot.getValue(User.class);
+						user[0] = userInstance;
+					}
+					latch.countDown();
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+			});
+			
+			
+			latch.await();
+			
+			if (user[0] == null) {
+				return new Response(false, "User doesn't exist in db");
+			}
+			Response response = new Response(true, "User fetched successfully.");
+			response.putData("user", user[0]);
+			return response;
+		} catch (Exception e) {
+    		System.err.print("Failed to get user by id: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Get user by id failed.");
+		}
+	}
+	
+	protected Response handleChangeUsernameAndPicture(Request request) {
+		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+		try {
+			String uid = (String) request.getData("uid");
+			boolean doesUsernameNeedUpdating = (boolean) request.getData("doesUsernameNeedUpdating");
+			boolean doesPictureNeedUpdating = (boolean) request.getData("doesPictureNeedUpdating");
+			
+			if (doesUsernameNeedUpdating) { // Update username in db
+				String username = (String) request.getData("newUsername");
+				database.getReference().child("Users").child(uid).child("username").setValueAsync(username).get();
+			}
+			if (doesPictureNeedUpdating) { // Update picture in db
+				String currentImagePath = (String) request.getData("currentImagePath");
+				String imagePath = (String) request.getData("imagePath");
+				byte[] imageBytes = (byte[]) request.getFile("image");
+				
+				// Get storage instance
+				FirebaseStorageService storageService = FirebaseStorageService.getInstance();
+		        Bucket bucket = storageService.getBucket();
+		        
+		        bucket.get(currentImagePath).delete(); // Delete the old profile picture
+		        bucket.create(imagePath, imageBytes, "image/png"); // Upload new image to storage
+		        database.getReference().child("Users").child(uid).child("img").setValueAsync(imagePath).get(); // Update img path in db
+			}
+			
+			
+			Response response = new Response(true, "Updated username and picture successfully.");
+			return response;
+		} catch (Exception e) {
+    		System.err.print("Failed to update username and picture: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Update username and picture failed.");
+		}
+	}
 }
