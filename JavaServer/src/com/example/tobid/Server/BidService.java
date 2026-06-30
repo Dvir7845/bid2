@@ -482,6 +482,7 @@ public class BidService {
 	                        for (DataSnapshot bidSnapshot : bidsCategorySnapshot.getChildren()) {
 	                            Bid bid = bidSnapshot.getValue(Bid.class);
 	                            if (bid == null) continue;
+
 	                            bid.setBidId(bidSnapshot.getKey());
 	                            addBidIfValid(request, bid, category, 
 	                            		currentDate, formatter,
@@ -730,6 +731,51 @@ public class BidService {
 			e.printStackTrace();
 			
 			return new Response(false, "Get image by path failed.");
+		}
+	}
+
+	public Response handleGetAmountOfOngoingBids(Request request) {
+		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+		try {
+			String uid = (String) request.getData("uid");
+			
+			int[] amountOfOngoingBids = {-1};
+			database.getReference().child("History").child("ParticipatedBids").child(uid)
+			.addListenerForSingleValueEvent(new ValueEventListener() {
+
+				@Override
+				public void onDataChange(DataSnapshot snapshot) {
+					if (snapshot.exists()) {
+						amountOfOngoingBids[0] = (int) snapshot.getChildrenCount();
+					} else {
+						amountOfOngoingBids[0] = 0;
+					}
+					latch.countDown();
+				}
+
+				@Override
+				public void onCancelled(DatabaseError error) {
+					latch.countDown();
+				}
+				
+			});;
+			
+			latch.await();
+			
+			Response response;
+			if (amountOfOngoingBids[0] != -1) {
+				response = new Response(true, "Get ongoing bid amount successful");
+				response.putData("amountOfOngoingBids", amountOfOngoingBids[0]);
+			} else {
+				response = new Response(false, "Get ongoing bid amount failed");
+			}
+			
+			return response;
+		} catch (Exception e) {
+			System.err.print("Get ongoing bid amount failed: " + e.getMessage());
+			e.printStackTrace();
+			
+			return new Response(false, "Get ongoing bid amount failed.");
 		}
 	}
 }

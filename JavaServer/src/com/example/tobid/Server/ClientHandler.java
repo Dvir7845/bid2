@@ -61,6 +61,8 @@ public class ClientHandler extends Thread {
             	return BidService.getInstance().handleGetPastBids(request);
             case GET_ACTIVE_BIDS:
             	return BidService.getInstance().handleGetActiveBids(request);
+            case GET_AMOUNT_OF_ONGOING_BIDS:
+            	return BidService.getInstance().handleGetAmountOfOngoingBids(request);
             case CREATE_BID:
                 return BidService.getInstance().handleCreateBid(request);
             case GET_BID_BY_BID_ID:
