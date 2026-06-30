@@ -91,7 +91,6 @@ public class BidAdapter extends RecyclerView.Adapter<BidAdapter.BidViewHolder> {
             @Override
             public void onResponseReceived(Response response) {
                 if (response != null && response.isSuccess()) {
-                    //byte[] imageBytes = (byte[]) response.getData("imageBytes");
                     String imageUrl = (String) response.getData("imageUrl");
                     // Use Glide to load the image into the ImageView
                     holder.ivImg.post(new Runnable() {

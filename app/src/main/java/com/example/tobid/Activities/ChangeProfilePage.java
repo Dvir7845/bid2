@@ -15,9 +15,16 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.example.tobid.DataModels.Action;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
+import com.example.tobid.DataModels.User;
 import com.example.tobid.R;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -32,17 +39,19 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
 
 public class ChangeProfilePage extends AppCompatActivity implements View.OnClickListener {
 
-    // Firebase components
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
+    // Firebase auth
     private FirebaseAuth mAuth;
+
     private String uid;
-    private FirebaseStorage storage;
-    private StorageReference storageRef;
+    private User userData;
+
+    private String fetchedUsername;
 
     // UI components
     private de.hdodenhof.circleimageview.CircleImageView ivPfp;
@@ -72,10 +81,8 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_change_profile_page);
 
-        // Initialize Firebase
-        database = FirebaseDatabase.getInstance();
+        // Initialize Auth
         mAuth = FirebaseAuth.getInstance();
-
         FirebaseUser user = mAuth.getCurrentUser();
         uid = user.getUid();
 
@@ -87,54 +94,39 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
         ibBiddingHistory = findViewById(R.id.ibBiddingHistory);
         ibBiddingHistory.setOnClickListener(this);
 
-        // Initialize username input
+        // Initialize username and profile image
         etChangeUsername = findViewById(R.id.etChangeUsername);
+        ivPfp = findViewById(R.id.ivPfp);
 
-        // Retrieve current username from Firebase and set it in the EditText
-        myRef = database.getReference("/Users/" + uid + "/username");
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Fetch the username from the database and set it in the input field
-                String value = dataSnapshot.getValue(String.class);
-                etChangeUsername.setText(value);
-            }
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_USER_BY_ID);
+        request.putData("uid", mAuth.getUid());
 
+        server.sendRequest(request, new ServerCallback() {
             @Override
-            public void onCancelled(DatabaseError error) {
-                Log.w(TAG, "Failed to read username.", error.toException());
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            userData = (User) response.getData("user");
+                            String username = userData.getUsername();
+                            fetchedUsername = username; // Used to check if username has been changed and we need to update it
+                            etChangeUsername.setText(username);
+
+                            String imagePath = userData.getImg();
+                            fetchAndDisplayImage(imagePath);
+                        } else {
+                            Toast.makeText(ChangeProfilePage.this, "Failed to get user data", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
             }
         });
 
         // Initialize buttons
         btnChangeProfile = findViewById(R.id.btnChangeProfile);
         btnChangeProfile.setOnClickListener(this);
-
-        // Initialize Firebase Storage
-        storage = FirebaseStorage.getInstance();
-
-        // Display the profile picture
-        ivPfp = findViewById(R.id.ivPfp);
-        database.getReference("/Users/" + uid + "/img").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String currentImagePath = snapshot.getValue(String.class);
-                storageRef = storage.getReference(currentImagePath);
-                storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                    // Load the profile picture from Firebase Storage into the ImageView using Glide
-                    Glide.with(ChangeProfilePage.this)
-                            .load(uri)
-                            .into(ivPfp);
-                }).addOnFailureListener(exception -> {
-                    Log.e("FirebaseStorage", "Failed to get download URL: " + exception.getMessage());
-                });
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });
 
         // Initialize the change image button
         btnChangeImage = findViewById(R.id.btnChangeImage);
@@ -143,6 +135,39 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
         // Initialize logout button
         btnLogOut = findViewById(R.id.btnLogOut);
         btnLogOut.setOnClickListener(this);
+    }
+
+    private void fetchAndDisplayImage(String imagePath) {
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_IMAGE_BY_PATH);
+        request.putData("imagePath", imagePath);
+
+        server.sendRequest(request, new ServerCallback() {
+            @Override
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            String imageUrl = (String) response.getData("imageUrl");
+                            System.out.println(imageUrl);
+                            // Use Glide to load the image into the ImageView
+                            ivPfp.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Glide.with(ivPfp.getContext())
+                                            .load(imageUrl)
+                                            .placeholder(R.drawable.default_pfp)
+                                            .into(ivPfp);
+                                }
+                            });
+                        } else {
+                            Toast.makeText(ChangeProfilePage.this, "Failed to get profile picture", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
     }
 
     // Function to launch an image chooser (Gallery)
@@ -186,70 +211,65 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
             if (user == null) {
                 return;
             }
-            myRef = database.getReference("/Users/" + uid + "/username");
-            myRef.setValue(etChangeUsername.getText().toString());
 
-            // If profile picture needs to be updated
-            if (selectedImageUri != null || photo != null) {
-                // Delete previous profile picture
-                database.getReference("/Users/" + uid + "/img").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        String currentImagePath = snapshot.getValue(String.class);
-                        storage.getReference(currentImagePath).delete();
-                        // Upload the selected profile picture to Firebase Storage
-                        String imagePath = "/Users/" + uid + "/profilePicture-" + Calendar.getInstance().getTimeInMillis() + ".png";
-                        storageRef = storage.getReference(imagePath);
+            // Check if data needs updating
+            String newUsername = etChangeUsername.getText().toString();
+            boolean doesUsernameNeedUpdating = !fetchedUsername.equals(newUsername);
+            boolean doesPictureNeedUpdating = selectedImageUri != null || photo != null;
+            System.out.println(fetchedUsername + " " + newUsername);
 
-                        // User chose gallery image
-                        if (selectedImageUri != null) {
-                            UploadTask uploadTask = storageRef.putFile(selectedImageUri);
-                            uploadTask.addOnFailureListener(exception -> {
-                                // Handle failure during upload
-                            }).addOnSuccessListener(taskSnapshot -> {
-                                // Once the image upload is successful, update the user's profile
-                                myRef = database.getReference("/Users/" + uid + "/img");
-                                myRef.setValue(imagePath);
-                            });
-                        }
-                        // User chose camera photo
-                        else if (photo != null) {
-                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                            photo.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-                            byte[] data = baos.toByteArray();
+            if (!doesUsernameNeedUpdating && !doesPictureNeedUpdating) return;
 
-                            UploadTask uploadTask = storageRef.putBytes(data);
-                            uploadTask.addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception exception) {
-                                    // Handle unsuccessful uploads
-                                }
-                            }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                @Override
-                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    // Once the image upload is successful, update the user's profile
-                                    myRef = database.getReference("/Users/" + uid + "/img");
-                                    myRef.setValue(imagePath);
-                                }
-                            });
-                        }
+            // Else, data needs updating
+            ServerConnection server = ServerConnection.getInstance();
+            Request request = new Request(Action.CHANGE_USERNAME_AND_PICTURE);
+            request.putData("uid", uid);
+            request.putData("doesUsernameNeedUpdating", doesUsernameNeedUpdating);
+            request.putData("doesPictureNeedUpdating", doesPictureNeedUpdating);
 
-                        // Navigate back to the main page
-                        Intent i = new Intent(ChangeProfilePage.this, MainPage.class);
-                        startActivity(i);
-                    }
+            // Add username data to request
+            request.putData("newUsername", newUsername);
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-
-                    }
-                });
+            // Add image data to request
+            String imagePath = "Users/" + uid + "/profilePicture-" + Calendar.getInstance().getTimeInMillis() + ".png";
+            request.putData("imagePath", imagePath);
+            request.putData("currentImagePath", userData.getImg());
+            byte[] imageBytes;
+            if (selectedImageUri != null) {
+                imageBytes = uriToBytes(selectedImageUri);
+            } else if (photo != null) {
+                imageBytes = bitmapToBytes(photo);
+            } else {
+                imageBytes = null;
             }
+            request.putFile("image", imageBytes);
 
-            // Navigate back to the main page
-            Intent i = new Intent(ChangeProfilePage.this, MainPage.class);
-            startActivity(i);
+            server.sendRequest(request, new ServerCallback() {
+                @Override
+                public void onResponseReceived(Response response) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (response != null && response.isSuccess()) {
+                                if (doesPictureNeedUpdating) {
+                                    Glide.with(ivPfp.getContext())
+                                            .load(imageBytes)
+                                            .placeholder(R.drawable.default_pfp)
+                                            .into(ivPfp);
+                                }
 
+                                Toast.makeText(ChangeProfilePage.this, "Data updated.", Toast.LENGTH_SHORT).show();
+
+                                // Navigate back to the main page
+                                Intent i = new Intent(ChangeProfilePage.this, MainPage.class);
+                                startActivity(i);
+                            } else {
+                                Toast.makeText(ChangeProfilePage.this, "Failed updating data.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                }
+            });
         }
         else if (v == btnChangeImage) {
             // Show a dialog allowing the user to choose between the gallery or camera
@@ -280,6 +300,34 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
         else if (v == ibNotifications) {
             Intent i = new Intent(this, NotificationsActivity.class);
             startActivity(i);
+        }
+    }
+
+    private byte[] bitmapToBytes(Bitmap photo) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        photo.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        byte[] bitmapPhotoBytes = baos.toByteArray();
+
+        return bitmapPhotoBytes;
+    }
+
+    public byte[] uriToBytes(Uri uri) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
+
+            // Read the image data in 8KB chunks
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1) {
+                byteBuffer.write(buffer, 0, len);
+            }
+
+            // Return image data byteArray
+            return byteBuffer.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }
