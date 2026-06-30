@@ -27,19 +27,12 @@ import com.example.tobid.DataModels.Bid;
 import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
+import com.example.tobid.DataModels.User;
 import com.example.tobid.R;
 import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.GenericTypeIndicator;
-import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,11 +41,10 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainPage extends AppCompatActivity implements View.OnClickListener {
     // Firebase instances
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
-    private TextView tvUsername;
+    private User userData;
+    private TextView tvUsername, tvOngoingBidsText;
     private Spinner spCategory;
     private EditText etSearchBar;
     private Button btnSearch;
@@ -91,30 +83,51 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         etSearchBar = findViewById(R.id.etSearchBar);
 
         tvUsername = findViewById(R.id.tvUsername);
+        ivPfp = findViewById(R.id.ivPfp);
+        ivPfp.setOnClickListener(this);
+
         // Initialize Firebase and Auth instances
-        database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
-
-
         if (user != null) {
-            fetchAndDisplayUsername();
+            fetchAndDisplayUsernameAndPicture();
         }
-
-        // Initialize profile picture
-        ivPfp = findViewById(R.id.ivPfp);
-        ivPfp.setOnClickListener(this);
-        String uid = mAuth.getUid();
-        fetchAndDisplayProfilePicture(uid);
 
         // Fetch and display categories from the db
         spCategory = findViewById(R.id.spCategory);
         setupSpinnerListener();
         fetchAndDisplayCategories();
 
+        // Fetch and display ongoing bids amount
+        tvOngoingBidsText = findViewById(R.id.tvOngoingBidsText);
+        fetchAndDisplayOngoingBidsAmount();
+
         // Initialize Adapter and Display bids
         initializeAndDisplayBids();
+    }
+
+    private void fetchAndDisplayOngoingBidsAmount() {
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_AMOUNT_OF_ONGOING_BIDS);
+        request.putData("uid", mAuth.getUid());
+
+        server.sendRequest(request, new ServerCallback() {
+            @Override
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            int amount = (int) response.getData("amountOfOngoingBids");
+                            tvOngoingBidsText.setText(amount + " ongoing bids");
+                        } else {
+                            Toast.makeText(MainPage.this, "Unable to get amount of ongoing bids", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
     }
 
     private void initializeAndDisplayBids() {
@@ -279,53 +292,61 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         });
     }
 
-    private void fetchAndDisplayProfilePicture(String uid) {
-        // Fetch and display profile picture from Firebase Storage
-        myRef = database.getReference("/Users/" + uid + "/img");
-        myRef.addValueEventListener(new ValueEventListener() {
+    private void fetchAndDisplayUsernameAndPicture() {
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_USER_BY_ID);
+        request.putData("uid", mAuth.getUid());
+
+        server.sendRequest(request, new ServerCallback() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String imagePath = dataSnapshot.getValue(String.class);
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            userData = (User) response.getData("user");
+                            String username = userData.getUsername();
+                            tvUsername.setText(username);
 
-                // Safety Check: Stop execution if the user doesn't have an image path in the database
-                if (imagePath == null || imagePath.trim().isEmpty()) {
-                    return;
-                }
-                FirebaseStorage storage = FirebaseStorage.getInstance();
-                StorageReference storageRef = storage.getReference(imagePath);
-
-                storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
-                    Glide.with(MainPage.this).load(uri).into(ivPfp);
-                }).addOnFailureListener(exception -> {
-                    Log.e("FirebaseStorage", "Failed to get download URL: " + exception.getMessage());
+                            String imagePath = userData.getImg();
+                            fetchAndDisplayProfilePicture(imagePath);
+                        } else {
+                            Toast.makeText(MainPage.this, "Failed to get user data", Toast.LENGTH_SHORT).show();
+                        }
+                    }
                 });
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.w(TAG, "Failed to read value.", error.toException());
             }
         });
     }
+    private void fetchAndDisplayProfilePicture(String imagePath) {
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_IMAGE_BY_PATH);
+        request.putData("imagePath", imagePath);
 
-
-    private void fetchAndDisplayUsername() {
-        String currentUserId = user.getUid();
-        myRef = database.getReference("Users").child(currentUserId);
-
-        myRef.addValueEventListener(new ValueEventListener() {
+        server.sendRequest(request, new ServerCallback() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    String username = snapshot.child("username").getValue(String.class);
-                    if (username != null) {
-                        tvUsername.setText(username);
+            public void onResponseReceived(Response response) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (response != null && response.isSuccess()) {
+                            String imageUrl = (String) response.getData("imageUrl");
+                            System.out.println(imageUrl);
+                            // Use Glide to load the image into the ImageView
+                            ivPfp.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Glide.with(ivPfp.getContext())
+                                            .load(imageUrl)
+                                            .placeholder(R.drawable.default_pfp)
+                                            .into(ivPfp);
+                                }
+                            });
+                        } else {
+                            Toast.makeText(MainPage.this, "Failed to get profile picture", Toast.LENGTH_SHORT).show();
+                        }
                     }
-                }
-            }
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Firebase", "Failed to read username", error.toException());
+                });
             }
         });
     }

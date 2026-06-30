@@ -8,6 +8,7 @@ public enum Action {
     GET_ALL_BIDS_IN_CATEGORY, // If passed "All" as the category field, will yield all the bids
     GET_PAST_BIDS,
     GET_ACTIVE_BIDS, // Get the users created and participating bids
+    GET_AMOUNT_OF_ONGOING_BIDS,
     CREATE_BID,
     GET_IMAGE_BY_PATH,
     LOGIN,
