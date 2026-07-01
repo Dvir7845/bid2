@@ -41,6 +41,8 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
     private Bid bid;
     private FirebaseAuth mAuth;
     private String saleId, saleCategory;
+    private final  long second = 1000 , minute = 60 * second , hour = 60 * minute , day = 24 * hour;
+
 
 
     private CountDownTimer countDownTimer;
@@ -121,7 +123,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         boolean isExpired = false;
         try {
             Date endDate = dateFormat.parse(bid.getEndDate());
-            if (endDate != null && currentTime >= endDate.getTime()) {
+            if (endDate != null && currentTime >= endDate.getTime()+day) {//add  day to include the current day
                 isExpired = true;
             }
         } catch (ParseException e) {
@@ -169,18 +171,18 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
             Date endDate = dateFormat.parse(endDateStr);
             if (endDate != null) {
                 long currentTime = Calendar.getInstance().getTimeInMillis();
-                long endTime = endDate.getTime();
+                long endTime = endDate.getTime()+day;// Add day to include the current day
                 long timeLeft = endTime - currentTime;
                 if (timeLeft > 0) {
                     countDownTimer = new CountDownTimer(timeLeft, 1000) {
                         @Override
                         public void onTick(long millisUntilFinished) {
-                            long days = millisUntilFinished / (1000 * 60 * 60 * 24);
-                            long hours = (millisUntilFinished / (1000 * 60 * 60)) % 24;
-                            long minutes = (millisUntilFinished / (1000 * 60)) % 60;
-                            long seconds = (millisUntilFinished / 1000) % 60;
+                            long daysLeft = millisUntilFinished / day;
+                            long hoursLeft = (millisUntilFinished / hour) % 24;
+                            long minutesLeft = (millisUntilFinished / minute) % 60;
+                            long secondsLeft = (millisUntilFinished / second) % 60;
 
-                            tvTimer.setText(String.format(Locale.US, "%d days, %02d:%02d:%02d", days, hours, minutes, seconds));
+                            tvTimer.setText(String.format(Locale.US, "%d days, %02d:%02d:%02d", daysLeft, hoursLeft, minutesLeft, secondsLeft));
                         }
 
                         @Override
