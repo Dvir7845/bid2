@@ -317,19 +317,26 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGES_REQUEST && resultCode == RESULT_OK && data != null) {
-            imageUris.clear();
-            ivImg1.setImageURI(null);
-            ivImg2.setImageURI(null);
-            ivImg3.setImageURI(null);
 
-            if (data.getClipData() != null) {
+
+            if (data.getClipData() != null) { // Multiple images selected
                 int count = data.getClipData().getItemCount();
                 for (int i = 0; i < count && i < maximumImageAmount; i++) {
-                    Uri imageUri = data.getClipData().getItemAt(i).getUri();
-                    imageUris.add(imageUri);
+                    if (imageUris.size() <= maximumImageAmount) {
+                        Uri imageUri = data.getClipData().getItemAt(i).getUri();
+                        imageUris.add(imageUri);
+                    } else {
+                        Toast.makeText(this, "You can only select up to 3 images", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
                 }
             } else if (data.getData() != null) {
-                imageUris.add(data.getData());
+                    if (imageUris.size() < maximumImageAmount) {
+                        imageUris.add(data.getData());
+                    } else {
+                        Toast.makeText(this, "You can only select up to 3 images", Toast.LENGTH_SHORT).show();
+                    }
+
             }
             displayImages();
         }
