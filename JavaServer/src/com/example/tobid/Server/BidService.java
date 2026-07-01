@@ -416,6 +416,7 @@ public class BidService {
 	        }
 	        // 3. Delete the active auction from the main "Bids" directory to save space and clean UI
 	        updates.put("/Bids/" + category + "/" + bidId, null);
+	        updates.put("/AutoBids/" + category + "/" + bidId, null);// delete autobots
 	        
 	        // Perform all three updates as an atomic action (either all go through or none)
 	        database.getReference().updateChildrenAsync(updates).get();
