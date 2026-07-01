@@ -177,7 +177,9 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
 
             // Get Data
             String itemName = etItemName.getText().toString();
-            String itemCategory = spCategory.getSelectedItem().toString();
+            Object selectedCategoryObj = spCategory.getSelectedItem();
+            // Convert to string and check for empty
+            String itemCategory = (selectedCategoryObj != null) ? selectedCategoryObj.toString() : "";
             String startingPriceStr = etStartingPrice.getText().toString();
             boolean isMaximumPrice = swIsMaximumPrice.isChecked();
             String maximumPriceStr = etMaximumPrice.getText().toString();
@@ -225,13 +227,13 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
                 Toast.makeText(CreateBidActivity.this, "Please select at least one image", Toast.LENGTH_SHORT).show();
                 isValid = false;
             }
-
-            float startingPrice = Float.parseFloat(startingPriceStr);
-            float maximumPrice = isMaximumPrice ? Float.parseFloat(maximumPriceStr) : -1;
-
             if (!isValid) {
                 return;
             }
+            float startingPrice = Float.parseFloat(startingPriceStr);
+            float maximumPrice = isMaximumPrice ? Float.parseFloat(maximumPriceStr) : -1;
+
+
 
             // Send a CREATE_SALE Request
             String itemId = itemName + Calendar.getInstance().getTimeInMillis();
