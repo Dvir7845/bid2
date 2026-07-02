@@ -10,6 +10,8 @@ import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.database.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -548,7 +550,7 @@ else {
         	ongoingBids.add(bid);
         }
 	}
-    
+    //To prevent small price increases
     private float getMinimumIncrement(float currentPrice) {
         if (currentPrice < 10) {
             return 0.50f;
@@ -710,24 +712,12 @@ else {
 			if (imageBlob == null) {
 				return new Response(false, "Image not found.");
 			}
-			
-			String downloadToken = imageBlob.getMetadata().get("firebaseStorageDownloadTokens");
-			if (downloadToken == null) {
-	            return new Response(false, "No download token found for this image.");
-			}
-			
-	        String encodedPath = imagePath.replace("/", "%2F");
-	        String downloadUrl = String.format(
-	                "https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
-	                bucket.getName(), 
-	                encodedPath, 
-	                downloadToken
-	            );
-	        
+			String bucketName = bucket.getName();
+			String encodedPath = URLEncoder.encode(imagePath, StandardCharsets.UTF_8.toString())
+                    .replace("+", "%20");
+			String downloadUrl = "https://firebasestorage.googleapis.com/v0/b/" + bucketName + "/o/" + encodedPath + "?alt=media";
 			Response response = new Response(true, "Get image by path successful");
-			
-			response.putData("imageUrl", downloadUrl);
-			
+	        response.putData("imageUrl", downloadUrl);
 			return response;
 		} catch (Exception e) {
 			System.err.print("Get image by path failed: " + e.getMessage());
