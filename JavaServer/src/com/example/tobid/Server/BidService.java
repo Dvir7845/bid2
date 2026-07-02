@@ -80,18 +80,17 @@ public class BidService {
             if (bid == null) {
                 return new Response(false, "The item could not be found.");
             }
-            if (bid.isHasMaximumPrice() && bid.getHighestOfferedBid() >= bid.getMaximumPrice()) {
-                return new Response(false, "This item has already been purchased or closed.");
-            }
             if (buyerUid.equals(bid.getItem().getSellerUID())) {
                 return new Response(false, "Sellers cannot purchase their own items.");
             }
             
+            	
             float currentHighest = bid.getHighestOfferedBid();
             float minimumAllowedBid = currentHighest + getMinimumIncrement(currentHighest);
             if (bidAmount < minimumAllowedBid) {
                 return new Response(false, "Bid is too low. For this price category, the minimum bid must be at least $" + minimumAllowedBid);
             }
+            
             
             Map<String, Object> updates = new HashMap<>();
             updates.put("highestOfferedBid", bidAmount);
@@ -111,18 +110,21 @@ public class BidService {
             // Mark user as a participant
             //bidRef.child("participants").child(buyerUid).setValueAsync(buyerUid).get();
             
-            NotificationService.getInstance().sendNotification(
-                    bid.getItem().getSellerUID(),
-                    NotificationType.LOST_LEAD_IN_BID,
-                    buyerUid,
-                    "2Bid System",
-                    bid.getItem().getStoragePathToImg1(),
-                    "New highest bid of $" + bidAmount + " on your item: " + bid.getItem().getItemName()
-                );
+           
+if(bid.isHasMaximumPrice() && bidAmount>=bid.getMaximumPrice()) 
+	 handleEndedBid(bid);	
             
-            // Wake up AutoBid bots to check for counter-offers
-            runAutoBidDuel(bidId, category);
-            
+else {
+	 NotificationService.getInstance().sendNotification(
+             bid.getItem().getSellerUID(),
+             NotificationType.LOST_LEAD_IN_BID,
+             buyerUid,
+             "2Bid System",
+             bid.getItem().getStoragePathToImg1(),
+             "New highest bid of $" + bidAmount + " on your item: " + bid.getItem().getItemName()
+         );
+            runAutoBidDuel(bidId, category); // Wake up AutoBid bots to check for counter-offers	
+}       
             return new Response(true, "Bid placed successfully.");
             
         } catch (Exception e) {
