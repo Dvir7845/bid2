@@ -76,33 +76,13 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         tvCategory.setText(bid.getItem().getCategory());
         tvDetails.setText(bid.getItem().getItemDescription());
         tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bid.getHighestOfferedBid()));
-        // Load images
-        com.google.firebase.storage.FirebaseStorage storage = com.google.firebase.storage.FirebaseStorage.getInstance();
-        if (item.getStoragePathToImg1() != null && !item.getStoragePathToImg1().isEmpty()) {
-            storage.getReference(item.getStoragePathToImg1()).getDownloadUrl()
-                    .addOnSuccessListener(uri -> {
-                        Glide.with(DisplayBidActivity.this).load(uri).into(imageView1);
-                    }).addOnFailureListener(e -> {
-                        android.util.Log.e("FirebaseStorage", "Failed to load img1: " + e.getMessage());
-                    });
-        }
-        if (item.getStoragePathToImg2() != null && !item.getStoragePathToImg2().isEmpty()) {
-            storage.getReference(item.getStoragePathToImg2()).getDownloadUrl()
-                    .addOnSuccessListener(uri -> {
-                        Glide.with(DisplayBidActivity.this).load(uri).into(imageView2);
-                    });
-        } else {
-            imageView2.setVisibility(View.GONE);
-        }
-        if (item.getStoragePathToImg3() != null && !item.getStoragePathToImg3().isEmpty()) {
-            storage.getReference(item.getStoragePathToImg3()).getDownloadUrl()
-                    .addOnSuccessListener(uri -> {
-                        Glide.with(DisplayBidActivity.this).load(uri).into(imageView3);
-                    });
-        } else {
-            imageView3.setVisibility(View.GONE);
-        }
 
+        // Load images
+        ServerConnection server = ServerConnection.getInstance();
+
+        sendRequestForImageAndDisplay(server, item.getStoragePathToImg1(), imageView1); // Get image 1
+        sendRequestForImageAndDisplay(server, item.getStoragePathToImg2(), imageView2); // Get image 2
+        sendRequestForImageAndDisplay(server, item.getStoragePathToImg3(), imageView3); // Get image 3
 
         if (bid.isHasMaximumPrice()) {
             btnBuy.setVisibility(View.VISIBLE);
@@ -131,7 +111,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         }
         // Check if the user is the seller or the leading bidder
         String currentUid = mAuth.getUid();
-        if ((isExpired || bid.getHighestOfferedBid() >= bid.getMaximumPrice()) && currentUid != null) {
+        if ((isExpired || (bid.getHighestOfferedBid() >= bid.getMaximumPrice()) && currentUid != null)) {
             if (currentUid.equals(bid.getItem().getSellerUID()) || currentUid.equals(bid.getLeadingBidderId())) {
                 fetchAndShowSellerPhone();
             }
@@ -143,6 +123,38 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
+        });
+    }
+
+    private void sendRequestForImageAndDisplay(ServerConnection server, String imagePath, ImageView ivToDisplayIn) {
+        if (imagePath == null || imagePath.isEmpty()) {
+            return;
+        }
+
+        Request request = new Request(Action.GET_IMAGE_BY_PATH);
+        request.putData("imagePath", imagePath);
+        server.sendRequest(request, new ServerCallback() {
+            @Override
+            public void onResponseReceived(Response response) {
+                if (response != null && response.isSuccess()) {
+                    String imageUrl = (String) response.getData("imageUrl");
+                    // Use Glide to load the image into the ImageView
+                    ivToDisplayIn.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Glide.with(ivToDisplayIn.getContext())
+                                    .load(imageUrl)
+                                    .into(ivToDisplayIn);
+                        }
+                    });
+                } else {
+                    if (ivToDisplayIn == imageView1 && response != null) {
+                        System.out.println("Error when loading first bid image. " + response.getMessage());
+                    } else {
+                        ivToDisplayIn.setVisibility(View.GONE);
+                    }
+                }
+            }
         });
     }
 

@@ -14,10 +14,15 @@ import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Notification;
 import com.example.tobid.R;
+import com.example.tobid.ServerCommunicationClasses.ServerCallback;
+import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
 
 import java.util.ArrayList;
 
@@ -70,15 +75,34 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         // Set the notification text
         holder.tvNotificationText.setText(notification.getMessage());
 
-        // Get the sender's image from Firebase Storage
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference storageRef = storage.getReference(notification.getSenderImg());
+        // Get the sender's image from the server
+        String imagePath = notification.getSenderImg();
+        if (imagePath == null) {
+            Log.e("BidAdapter", "Bid image is null.");
+            return;
+        }
 
-        // Use Glide to load the sender's profile picture into the ImageView
-        Glide.with(context.getApplicationContext())
-                .load(storageRef)
-                .placeholder(R.drawable.default_pfp)
-                .into(holder.ivPfp);
+        ServerConnection server = ServerConnection.getInstance();
+        Request request = new Request(Action.GET_IMAGE_BY_PATH);
+        request.putData("imagePath", imagePath);
+
+        server.sendRequest(request, new ServerCallback() {
+            @Override
+            public void onResponseReceived(Response response) {
+                if (response != null && response.isSuccess()) {
+                    String imageUrl = (String) response.getData("imageUrl");
+                    // Use Glide to load the image into the ImageView
+                    holder.ivPfp.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Glide.with(holder.ivPfp.getContext())
+                                    .load(imageUrl)
+                                    .into(holder.ivPfp);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     /**

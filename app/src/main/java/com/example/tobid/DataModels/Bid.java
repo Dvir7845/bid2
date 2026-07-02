@@ -30,7 +30,7 @@ public class Bid implements Serializable {
         this.maximumPrice = maximumPrice;
 
         // Default initialization
-        this.highestOfferedBid = 0;
+        this.highestOfferedBid = startingPrice;
         this.leadingBidderId = null;
         this.bidsMade = 0;
     }

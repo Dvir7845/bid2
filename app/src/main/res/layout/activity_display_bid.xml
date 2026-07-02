@@ -53,21 +53,24 @@
                 <ImageView
                     android:id="@+id/imageView"
                     android:layout_width="match_parent"
-                    android:layout_height="240dp"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="240dp"
                     android:layout_margin="8dp"
                     android:scaleType="fitCenter" />
 
                 <ImageView
                     android:id="@+id/imageView2"
                     android:layout_width="match_parent"
-                    android:layout_height="240dp"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="240dp"
                     android:layout_margin="8dp"
                     android:scaleType="fitCenter" />
 
                 <ImageView
                     android:id="@+id/imageView3"
                     android:layout_width="match_parent"
-                    android:layout_height="240dp"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="240dp"
                     android:layout_margin="8dp"
                     android:scaleType="fitCenter" />
             </LinearLayout>

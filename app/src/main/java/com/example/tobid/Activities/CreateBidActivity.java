@@ -231,7 +231,7 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
                 return;
             }
             float startingPrice = Float.parseFloat(startingPriceStr);
-            float maximumPrice = isMaximumPrice ? Float.parseFloat(maximumPriceStr) : -1;
+            float maximumPrice = isMaximumPrice ? Float.parseFloat(maximumPriceStr) : Float.MAX_VALUE;
 
 
 
