@@ -1,4 +1,4 @@
-package com.example.tobid.DataModels;
+package com.example.tobid.Server;
 
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;

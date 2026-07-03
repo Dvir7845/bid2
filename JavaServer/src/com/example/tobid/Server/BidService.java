@@ -1,15 +1,5 @@
 package com.example.tobid.Server;
 
-import com.example.tobid.DataModels.Bid;
-import com.example.tobid.DataModels.FirebaseStorageService;
-import com.example.tobid.DataModels.Item;
-import com.example.tobid.DataModels.NotificationType;
-import com.example.tobid.DataModels.Request;
-import com.example.tobid.DataModels.Response;
-import com.google.cloud.storage.Blob;
-import com.google.cloud.storage.Bucket;
-import com.google.firebase.database.*;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -19,6 +9,19 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import com.example.tobid.DataModels.Bid;
+import com.example.tobid.DataModels.Item;
+import com.example.tobid.DataModels.NotificationType;
+import com.example.tobid.DataModels.Request;
+import com.example.tobid.DataModels.Response;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.Bucket;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class BidService {
     private static BidService instance;
