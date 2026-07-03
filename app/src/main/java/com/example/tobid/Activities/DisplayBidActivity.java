@@ -6,6 +6,7 @@ import android.os.CountDownTimer;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,6 +39,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
     private EditText etBidAmount;
     private Button btnBid, btnAuto, btnBuy;
     private ImageView imageView1, imageView2, imageView3;
+    private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
     private Bid bid;
     private FirebaseAuth mAuth;
     private String saleId, saleCategory;
@@ -52,6 +54,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_display_bid);
+
         initViews();
 
         // Initialize Firebase components
@@ -76,6 +79,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         tvCategory.setText(bid.getItem().getCategory());
         tvDetails.setText(bid.getItem().getItemDescription());
         tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", bid.getHighestOfferedBid()));
+
 
         // Load images
         ServerConnection server = ServerConnection.getInstance();
@@ -148,11 +152,13 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                         }
                     });
                 } else {
-                    if (ivToDisplayIn == imageView1 && response != null) {
-                        System.out.println("Error when loading first bid image. " + response.getMessage());
-                    } else {
-                        ivToDisplayIn.setVisibility(View.GONE);
-                    }
+                    ivToDisplayIn.post(() -> {
+                        if (ivToDisplayIn == imageView1 && response != null) {
+                            System.out.println("Error when loading first bid image. " + response.getMessage());
+                        } else {
+                            ivToDisplayIn.setVisibility(View.GONE);
+                        }
+                    });
                 }
             }
         });
@@ -172,9 +178,15 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         imageView1 = findViewById(R.id.imageView);
         imageView2 = findViewById(R.id.imageView2);
         imageView3 = findViewById(R.id.imageView3);
+        ibHomeButton = findViewById(R.id.ibHomeButton);
+        ibNotifications = findViewById(R.id.ibNotifications);
+        ibBiddingHistory = findViewById(R.id.ibBiddingHistory);
         btnBid.setOnClickListener(this);
         btnAuto.setOnClickListener(this);
         btnBuy.setOnClickListener(this);
+        ibHomeButton.setOnClickListener(this);
+        ibNotifications.setOnClickListener(this);
+        ibBiddingHistory.setOnClickListener(this);
     }
 
     private void startCountdown(String endDateStr) {
@@ -323,22 +335,32 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                             Toast.makeText(DisplayBidActivity.this, "Purchased Successfully!", Toast.LENGTH_SHORT).show();
                             tvCurrentPrice.setText(String.format(Locale.US, "$%.2f", buyNowPrice));
                             tvTimer.setText("Auction Closed - Item Purchased!");
-                            disableBidding();
-                            // Check if the user is the seller or the leading bidder
-                            String currentUid = mAuth.getUid();
-                            if (currentUid != null && (currentUid.equals(bid.getItem().getSellerUID()) || currentUid.equals(mAuth.getUid()))) {
-                                fetchAndShowSellerPhone();
-                            }
-                        } else {
+                            disableBidding(); //disable bidding buttons
+                            fetchAndShowSellerPhone(); //show seller phone
+
+                        } else { // Handle error response
                             String errorMsg = (response != null) ? response.getMessage() : "Unknown error";
                             Toast.makeText(DisplayBidActivity.this, "Failed to Buy Now: " + errorMsg, Toast.LENGTH_LONG).show();
                         }
                     });
                 }
             });
-           }
 
-           }
+    } else if (v == ibHomeButton) {
+        Intent i = new Intent(this, MainPage.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(i);
+    } else if (v == ibNotifications) {
+        Intent i = new Intent(this, NotificationsActivity.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(i);
+    } else if (v == ibBiddingHistory) {
+        Intent i = new Intent(this, BidsHistoryActivity.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(i);
+    }
+    }
+
 
     private void fetchAndShowSellerPhone() {
         String sellerUid = bid.getItem().getSellerUID();

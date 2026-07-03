@@ -146,11 +146,13 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
     public void onClick(View v) {
         if (v == ibBiddingHistory) {
             Intent i = new Intent(this, BidsHistoryActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
 
         else if (v == ibHomeButton) {
             Intent i = new Intent(this, MainPage.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
 

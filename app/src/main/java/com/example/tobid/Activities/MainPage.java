@@ -215,11 +215,19 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
             public void onResponseReceived(Response response) {
                 runOnUiThread(() -> {
                     if (response != null && response.isSuccess()) {
+
                         ongoingBids.clear();
                         futureBids.clear();
 
                         ArrayList<Bid> receivedBids = (ArrayList<Bid>) response.getData("ongoingBids");
+                        Log.d("BidDebug", "Raw server data size: " + (receivedBids == null ? "NULL" : receivedBids.size()));
+
                         receivedBids = filterBidsByName(receivedBids, bidNameFilter);
+                        Log.d("BidDebug", "Server returned: " + (receivedBids != null ? receivedBids.size() : "null") + " bids");
+                        Log.d("BidDebug", "After filter: " + (receivedBids == null ? "NULL" : receivedBids.size()));
+
+
+                        Log.d("BidDebug", "After filter: " + receivedBids.size() + " bids");
 
                         ongoingBids.addAll(receivedBids);
 
@@ -233,11 +241,14 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
 
                         Collections.shuffle(ongoingBids);
                         Collections.shuffle(futureBids);
-
+                        Log.d("BidDebug", "Final list size passed to Adapter: " + ongoingBids.size());
                         ongoingBidsAdapter.notifyDataSetChanged();
                         futureBidsAdapter.notifyDataSetChanged();
                     } else {
-                        Toast.makeText(MainPage.this, "Failed getting bids for display", Toast.LENGTH_SHORT).show();
+                        // Toast.makeText(MainPage.this, "Failed getting bids for display", Toast.LENGTH_SHORT).show();
+                        String errorMsg = (response != null && response.getMessage() != null) ? response.getMessage() : "Unknown Server Error";
+                        Toast.makeText(MainPage.this, "Server error: " + errorMsg, Toast.LENGTH_LONG).show();
+                        System.out.println("🚨 SERVER REJECTED: " + errorMsg);
                     }
                 });
             }
@@ -355,12 +366,15 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
     public void onClick(View v) {
         if(v == btnNewBid){
             Intent i = new Intent(this, CreateBidActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         } else if (v == ivPfp) {
             Intent i = new Intent(this, ChangeProfilePage.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         } else if (v == ibBiddingHistory) {
             Intent i = new Intent(this, BidsHistoryActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
         else if (v == ibHomeButton) {
@@ -369,6 +383,7 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
         }
         else if (v == ibNotifications) {
             Intent i = new Intent(this, NotificationsActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
         else if (v == btnSearch) {

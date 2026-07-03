@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".Activities.BidsHistoryActivity"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:background="#121212">
 
     <LinearLayout

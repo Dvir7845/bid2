@@ -247,6 +247,7 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
 
                                 // Navigate back to the main page
                                 Intent i = new Intent(ChangeProfilePage.this, MainPage.class);
+                                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                                 startActivity(i);
                             } else {
                                 Toast.makeText(ChangeProfilePage.this, "Failed updating data.", Toast.LENGTH_SHORT).show();
@@ -269,11 +270,13 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
             // Log out the user and redirect to the SignInPage
             mAuth.signOut();
             Intent i = new Intent(this, SignInActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
 
         else if (v == ibBiddingHistory) {
             Intent i = new Intent(this, BidsHistoryActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
 
@@ -284,6 +287,7 @@ public class ChangeProfilePage extends AppCompatActivity implements View.OnClick
 
         else if (v == ibNotifications) {
             Intent i = new Intent(this, NotificationsActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
     }

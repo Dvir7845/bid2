@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".Activities.ChangeProfilePage"
     android:orientation="vertical"
+    android:fitsSystemWindows="true"
     android:background="#121212">
 
     <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"

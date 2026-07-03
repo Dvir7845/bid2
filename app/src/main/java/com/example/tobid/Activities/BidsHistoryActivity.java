@@ -173,11 +173,13 @@ public class BidsHistoryActivity extends AppCompatActivity implements View.OnCli
 
         else if (v == ibHomeButton) {
             Intent i = new Intent(this, MainPage.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
 
         else if (v == ibNotifications) {
             Intent i = new Intent(this, NotificationsActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
         }
     }
