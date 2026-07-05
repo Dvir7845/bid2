@@ -5,6 +5,7 @@
     android:layout_gravity="center_horizontal"
     android:layout_marginHorizontal="22dp"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:descendantFocusability="blocksDescendants"
     android:orientation="vertical">
 
 

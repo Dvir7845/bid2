@@ -96,7 +96,7 @@ public class BidService {
                 return new Response(false, "Bid is too low. For this price category, the minimum bid must be at least $" + minimumAllowedBid);
             }
             
-            
+            String previousLeaderUid = bid.getLeadingBidderId();
             Map<String, Object> updates = new HashMap<>();
             updates.put("highestOfferedBid", bidAmount);
             updates.put("leadingBidderId", buyerUid);
@@ -120,14 +120,16 @@ if(bid.isHasMaximumPrice() && bidAmount>=bid.getMaximumPrice())
 	 handleEndedBid(bid);	
             
 else {
-	 NotificationService.getInstance().sendNotification(
-             bid.getItem().getSellerUID(),
+	if (previousLeaderUid != null && !previousLeaderUid.isEmpty() && !previousLeaderUid.equals(buyerUid)) {
+        NotificationService.getInstance().sendNotification(
+             previousLeaderUid, 
              NotificationType.LOST_LEAD_IN_BID,
-             buyerUid,
+             bidId,
              "2Bid System",
              bid.getItem().getStoragePathToImg1(),
-             "New highest bid of $" + bidAmount + " on your item: " + bid.getItem().getItemName()
+             "You lost the lead! New highest bid of $" + bidAmount + " on item: " + bid.getItem().getItemName()
          );
+    }
             runAutoBidDuel(bidId, category); // Wake up AutoBid bots to check for counter-offers	
 }       
             return new Response(true, "Bid placed successfully.");
@@ -352,36 +354,77 @@ else {
     
     protected Response handleGetBidById(Request request) {
     	try {
-    		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+    		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(3);
     		
     		String bidId = (String) request.getData("bidId");
     		final Bid[] result = new Bid[1];
 
-    		DatabaseReference myRef = database.getReference().child("Bids");
-    		myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-
-				@Override
-				public void onDataChange(DataSnapshot snapshot) {
-					for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
-						if (categorySnapshot.hasChild(bidId)) {
-							DataSnapshot bidSnapshot = categorySnapshot.child(bidId);
-							result[0] = bidSnapshot.getValue(Bid.class);
-							if (result[0] != null)
-								result[0].setBidId(bidSnapshot.getKey());
-							
-							latch.countDown(); // If bid found, finish early
-						}
-					}
-					
-					latch.countDown(); // If bid not found, terminate to continue
-				}
-
-				@Override
-				public void onCancelled(DatabaseError error) {
-					latch.countDown();
-				}
-    			
-    		});
+    		// 1. Search in Active Bids
+            DatabaseReference activeRef = database.getReference().child("Bids");
+            activeRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (result[0] == null) {
+                        for (DataSnapshot categorySnapshot : snapshot.getChildren()) {
+                            if (categorySnapshot.hasChild(bidId)) {
+                                DataSnapshot bidSnapshot = categorySnapshot.child(bidId);
+                                result[0] = bidSnapshot.getValue(Bid.class);
+                                if (result[0] != null) {
+                                    result[0].setBidId(bidSnapshot.getKey());
+                                }
+                                break; // Found it
+                            }
+                        }
+                    }
+                    latch.countDown();
+                }
+                @Override
+                public void onCancelled(DatabaseError error) { latch.countDown(); }
+            });
+         // 2. Search in History/HostedBids
+            DatabaseReference hostedRef = database.getReference().child("History").child("HostedBids");
+            hostedRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (result[0] == null) {
+                        for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                            if (userSnapshot.hasChild(bidId)) {
+                                DataSnapshot bidSnapshot = userSnapshot.child(bidId);
+                                result[0] = bidSnapshot.getValue(Bid.class);
+                                if (result[0] != null) {
+                                    result[0].setBidId(bidSnapshot.getKey());
+                                }
+                                break; // Found it
+                            }
+                        }
+                    }
+                    latch.countDown();
+                }
+                @Override
+                public void onCancelled(DatabaseError error) { latch.countDown(); }
+            });
+         // 3. Search in History/ParticipatedBids
+            DatabaseReference participatedRef = database.getReference().child("History").child("ParticipatedBids");
+            participatedRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (result[0] == null) {
+                        for (DataSnapshot userSnapshot : snapshot.getChildren()) {
+                            if (userSnapshot.hasChild(bidId)) {
+                                DataSnapshot bidSnapshot = userSnapshot.child(bidId);
+                                result[0] = bidSnapshot.getValue(Bid.class);
+                                if (result[0] != null) {
+                                    result[0].setBidId(bidSnapshot.getKey());
+                                }
+                                break; // Found it
+                            }
+                        }
+                    }
+                    latch.countDown();
+                }
+                @Override
+                public void onCancelled(DatabaseError error) { latch.countDown(); }
+            });
     		latch.await();
     		
     		if (result[0] != null) {
@@ -434,7 +477,7 @@ else {
 	        	NotificationService.getInstance().sendNotification(
 	        			sellerUid,
 	        			NotificationType.BID_WON, // Reuse or add dynamic status
-	                    "2Bid",
+	        			bidId,
 	                    "2Bid System",
 	                    bid.getItem().getStoragePathToImg1(),
 	                    "Your auction for '" + bid.getItem().getItemName() + "' ended! Winner ID: " + winnerUid + " at $" + bid.getHighestOfferedBid()
@@ -443,7 +486,7 @@ else {
 	        	NotificationService.getInstance().sendNotification(
 	        			winnerUid,
 	                    NotificationType.BID_WON,
-	                    "2Bid",
+	                    bidId,
 	                    "2Bid System",
 	                    bid.getItem().getStoragePathToImg1(),
 	                    "Congratulations! You won the auction for '" + bid.getItem().getItemName() + "' for $" + bid.getHighestOfferedBid()
@@ -453,7 +496,7 @@ else {
 	        	NotificationService.getInstance().sendNotification(
 	        			sellerUid,
 	                    NotificationType.LOST_LEAD_IN_BID, // Or an AUCTION_EXPIRED status
-	                    "2Bid",
+	                    bidId,
 	                    "2Bid System",
 	                    bid.getItem().getStoragePathToImg1(),
 	                    "Your auction for '" + bid.getItem().getItemName() + "' expired with no active bids."

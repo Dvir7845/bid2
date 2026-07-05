@@ -131,6 +131,7 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
                         break;
                     case BID_CREATED:
                     case LOST_LEAD_IN_BID:
+                    case BID_WON:
                         // Get specific bid from server and go to bid page
                         request = new Request(Action.GET_BID_BY_BID_ID);
                         request.putData("bidId", notification.getSenderId());
@@ -151,9 +152,6 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
                                 });
                             }
                         });
-                        break;
-                    case BID_WON:
-                        // TODO: Go to chat activity with bid creator
                         break;
                 }
 
