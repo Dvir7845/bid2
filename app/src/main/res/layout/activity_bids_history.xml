@@ -37,41 +37,53 @@
             android:textStyle="bold"/>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tvHostedBidsText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:layout_weight="0"
-        android:textSize="25sp"
-        android:text="Hosted Bids:"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="8dp"/>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvHostedBids"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_weight="1"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/tvParticipatingBidsText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:layout_weight="0"
-        android:textSize="25sp"
-        android:text="Participating Bids:"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="8dp"/>
+            <TextView
+                android:id="@+id/tvHostedBidsText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:layout_weight="0"
+                android:textSize="25sp"
+                android:text="Hosted Bids:"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="8dp"/>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvParticipatingBids"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_weight="1"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvHostedBids"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/tvParticipatingBidsText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:layout_weight="0"
+                android:textSize="25sp"
+                android:text="Participating Bids:"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="8dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvParticipatingBids"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"/>
+        </LinearLayout>
+    </ScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"

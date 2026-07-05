@@ -19,8 +19,6 @@ import com.example.tobid.DataModels.Notification;
 import com.example.tobid.R;
 import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
 

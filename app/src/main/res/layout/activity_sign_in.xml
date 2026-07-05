@@ -38,7 +38,7 @@
         android:ems="10"
         android:hint=" Enter email"
         android:textColor="@color/black"
-        android:inputType="text"
+        android:inputType="textEmailAddress"
         android:minHeight="48dp" />
 
     <EditText
