@@ -18,7 +18,7 @@ public class MainServer {
 
     public static void main(String[] args) {
     	String portEnv = System.getenv("PORT");
-    	int port = (portEnv != null) ? Integer.parseInt(portEnv) : 8080;
+    	int port = (portEnv != null) ? Integer.parseInt(portEnv) : 50406;
         try {
         	InputStream serviceAccount;
         	String fbCredentialsEnv = System.getenv("FIREBASE_CREDENTIALS");
