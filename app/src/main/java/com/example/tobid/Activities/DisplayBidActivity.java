@@ -43,6 +43,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
     private Bid bid;
     private FirebaseAuth mAuth;
     private String saleId, saleCategory;
+    private boolean isExpired;
     private final  long second = 1000 , minute = 60 * second , hour = 60 * minute , day = 24 * hour;
 
 
@@ -101,10 +102,11 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
             tvDetails.setVisibility(View.VISIBLE);
            disableBidding();
         }
+
         // Check if the bid is expired
         long currentTime = Calendar.getInstance().getTimeInMillis();
         SimpleDateFormat dateFormat = new SimpleDateFormat("d-M-yyyy", Locale.getDefault());
-        boolean isExpired = false;
+        isExpired = false;
         try {
             Date endDate = dateFormat.parse(bid.getEndDate());
             if (endDate != null && currentTime >= endDate.getTime()+day) {//add  day to include the current day
@@ -113,6 +115,18 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         } catch (ParseException e) {
             e.printStackTrace();
         }
+
+        // Check if the bid is a future bid
+        try {
+            Date startDate = dateFormat.parse(bid.getStartDate());
+
+            if (startDate != null && currentTime < startDate.getTime()) {
+             disableBidding();
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
         // Check if the user is the seller or the leading bidder
         String currentUid = mAuth.getUid();
         if ((isExpired || (bid.getHighestOfferedBid() >= bid.getMaximumPrice()) && currentUid != null)) {
@@ -249,6 +263,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         // Check if bid amount is valid
 
         if (v == btnBid) {
+            if (isExpired) return;
             // Check if bid is valid
             String amount = etBidAmount.getText().toString();
             if (amount.isEmpty()) {
@@ -282,6 +297,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
                 }
             });
         } else if (v == btnAuto) {
+            if (isExpired) return;
             String amount = etBidAmount.getText().toString();
             if (amount.isEmpty()) {
                 Toast.makeText(this, "Please enter your maximum limit for AutoBid", Toast.LENGTH_SHORT).show();
@@ -319,6 +335,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
 
 
         } else if (v == btnBuy) {
+            if (isExpired) return;
             float buyNowPrice = bid.getMaximumPrice();
 
             Request request = new Request(Action.BUY_NOW);
