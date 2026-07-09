@@ -10,10 +10,11 @@ import java.net.Socket;
 public class ServerConnection {
 
     //private static final String SERVER_IP = "10.0.2.2"; // ip for simulator
-    private static final String SERVER_IP = "192.168.1.242"; // Yaniv's ip
+    private static final String SERVER_IP ="136.113.101.144"; // cloud's IPS
+    //private static final String SERVER_IP = "192.168.1.242"; // Yaniv's ip
     //private static final String SERVER_IP = "10.0.0.8" ; // Dvir home
-    //private static final String SERVER_IP = "10.52.148.72" ; // Dvir hotspot
-    private static final int SERVER_PORT = 8080;
+    //private static final String SERVER_IP = "10.83.85.72" ; // Dvir hotspot
+    private static final int SERVER_PORT = 50406;
     private static ServerConnection instance;
     private ServerConnection() {}
     // Singleton pattern to ensure only one instance of the class is created
@@ -46,6 +47,7 @@ public class ServerConnection {
                     callback.onResponseReceived(response);
 
                 } catch (Exception e) {
+                    android.util.Log.e("ToBid_Network", "CRITICAL ERROR CONNECTING TO SERVER", e);
                     e.printStackTrace();
 
                     callback.onResponseReceived(
