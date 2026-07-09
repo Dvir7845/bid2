@@ -35,9 +35,9 @@ public class ClientHandler extends Thread {
             out.writeObject(response);
             out.flush();
             System.out.println("Request processed. Closing connection.");
-
-        } 
-        catch (Exception e) {
+    } catch (java.io.StreamCorruptedException e) {//bot 
+    } catch (java.io.EOFException e) {
+    } catch (Exception e) {
             System.out.println("Error handling client: " + e.toString());
         }
     }
