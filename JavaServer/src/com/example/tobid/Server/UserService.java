@@ -1,8 +1,5 @@
 package com.example.tobid.Server;
 
-import java.util.ArrayList;
-
-import com.example.tobid.DataModels.Notification;
 import com.example.tobid.DataModels.NotificationType;
 import com.example.tobid.DataModels.Request;
 import com.example.tobid.DataModels.Response;
@@ -18,6 +15,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+/**
+ * Singleton service class handling user-related operations, including user registration,
+ * authentication, profile updates,  and Firebase Storage operations.
+ */
 public class UserService {
     private static UserService instance;
     private final FirebaseDatabase database;
@@ -33,51 +34,7 @@ public class UserService {
         return instance;
     }
     
-    protected Response handleGetUserNotifications(Request request) {
-    	final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-    	
-    	ArrayList<Notification> notifications = new ArrayList<>();
-		try {
-			String uid = (String) request.getData("uid");
-			DatabaseReference myRef = database.getReference().child("Users").child(uid).child("notifications");
-
-	        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-
-				@Override
-				public void onDataChange(DataSnapshot snapshot) {
-					System.out.println("fetched notifications");
-					for (DataSnapshot datas : snapshot.getChildren()) {
-	                    Notification notification = datas.getValue(Notification.class);
-	                    notifications.add(notification);
-	                }
-					System.out.println("got notifications");
-					latch.countDown();
-				}
-
-				@Override
-				public void onCancelled(DatabaseError error) {
-					System.out.println("Error fetching requests for user: " + uid);
-					latch.countDown();
-				}
-	        });
-			
-	        // Wait for the db to fetch the notifications
-	        System.out.println("waiting for latch");
-	        latch.await();
-	        System.out.println("latch received");
-	        Response response = new Response(true, "Notifications fetch successfuly");
-	        response.putData("notifications", notifications);
-	        return response; 
-			
-		} catch (Exception e) {
-    		System.err.print("Notifications retrieval failed: " + e.getMessage());
-			e.printStackTrace();
-			
-			return new Response(false, "Notifications retrieval failed.");
-    	}
-		
-		
-	}
+    
     
     protected Response handleRegister(Request request){
     	System.out.println("Inside handle");
@@ -159,22 +116,7 @@ public class UserService {
     	}
 	}
     
-    protected Response handleRemoveNotificationById(Request request) {
-    	try {
-    		String uid = (String) request.getData("uid");
-    		String notificationId = (String) request.getData("notificationId");
-    		
-    		DatabaseReference myRef = database.getReference().child("Users").child(uid).child("notifications").child(notificationId);
-    		myRef.setValueAsync(null).get();
-    		
-    		return new Response(true, "Notification removal succeeded.");
-    	} catch (Exception e) {
-    		System.err.print("Notification removal failed: " + e.getMessage());
-			e.printStackTrace();
-			
-			return new Response(false, "Notification removal failed.");
-    	}
-	}
+    
     protected Response handleGetUserPhone(Request request) {
         final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
         final String[] phoneHolder = new String[1];
