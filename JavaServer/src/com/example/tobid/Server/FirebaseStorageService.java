@@ -3,6 +3,10 @@ package com.example.tobid.Server;
 import com.google.cloud.storage.Bucket;
 import com.google.firebase.cloud.StorageClient;
 
+/**
+ * Singleton service for managing Firebase Cloud Storage operations.
+ * Provides centralized access to the storage bucket for uploading and retrieving files (e.g., images).
+ */
 public class FirebaseStorageService {
     private static FirebaseStorageService instance;
     private final Bucket bucket;

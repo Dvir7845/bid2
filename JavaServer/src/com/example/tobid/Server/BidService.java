@@ -22,7 +22,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
+/**
+ * Singleton service that manages all auction mechanics for the ToBid app.
+ * It handles bid placements, AutoBid duels, "Buy Now" purchases, 
+ * and moving ended auctions to history in Firebase.
+ */
 public class BidService {
     private static BidService instance;
     private final FirebaseDatabase database;
@@ -187,12 +191,14 @@ else {
         }
     }
     
+    //Executes an automated bidding war between active bots 
+    //until no bot can outbid the current price or the maximum 'Buy Now' price is reached.
     private void runAutoBidDuel(String bidId, String category) {
         try {
             boolean duelOngoing = true;
             
             while (duelOngoing) {
-                // 1. Fetch the latest state of the bid using our synchronous helper function
+                // 1. Fetch the latest state of the bid 
                 Bid bid = fetchBidSync(category, bidId);
                 
                 // 2. Fetch all active auto-bid bots for this specific item

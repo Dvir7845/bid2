@@ -194,7 +194,6 @@ public class UserService {
 	}
 	
 	protected Response handleChangeUsernameAndPicture(Request request) {
-		final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
 		try {
 			String uid = (String) request.getData("uid");
 			boolean doesUsernameNeedUpdating = (boolean) request.getData("doesUsernameNeedUpdating");

@@ -10,9 +10,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
-
 /**
  * Main server class for the ToBid application.
  * Responsible for initializing the Firebase connection and listening for incoming TCP client connections.
