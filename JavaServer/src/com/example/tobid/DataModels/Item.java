@@ -2,6 +2,9 @@ package com.example.tobid.DataModels;
 
 import java.io.Serializable;
 
+/**
+ * Represents an item in the system.
+ */
 public class Item implements Serializable {
     private String itemId;
     private String itemName;
@@ -75,4 +78,3 @@ public class Item implements Serializable {
         return category;
     }
 }
-

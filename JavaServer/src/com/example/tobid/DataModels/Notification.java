@@ -7,7 +7,7 @@ import java.io.Serializable;
  * A notification includes the sender's details (id, username, profile picture)
  * and the message content associated with the notification.
  */
-public class Notification implements Serializable{
+public class Notification implements Serializable {
     private NotificationType notificationType;
     // Unique identifier for the notification (senderID + creationTime)
     private String id;
@@ -29,7 +29,6 @@ public class Notification implements Serializable{
     /**
      * Constructor for a Notification object.
      *
-     * @param notificationType the NotificationType enum value representing notification type
      * @param id the unique notification ID (constructed from senderId + creation time in millis)
      * @param senderId the user ID of the sender
      * @param senderUsername the username of the sender
