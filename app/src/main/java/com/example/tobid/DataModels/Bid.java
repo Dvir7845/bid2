@@ -2,6 +2,9 @@ package com.example.tobid.DataModels;
 
 import java.io.Serializable;
 
+/**
+ * Represents a bid in the system.
+ */
 public class Bid implements Serializable {
     private String bidId;
     private final Item item;

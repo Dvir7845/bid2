@@ -29,16 +29,12 @@ public class ServerConnection {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try (
+                try (// Create a socket to connect to the server
                         Socket socket = new Socket(SERVER_IP, SERVER_PORT);
-
-                        ObjectOutputStream out =
-                                new ObjectOutputStream(socket.getOutputStream());
-
-                        ObjectInputStream in =
-                                new ObjectInputStream(socket.getInputStream())
+                        ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+                        ObjectInputStream in = new ObjectInputStream(socket.getInputStream())
                 ) {
-
+                    // Send the request to the server and receive the response
                     out.writeObject(request);
                     out.flush();
 

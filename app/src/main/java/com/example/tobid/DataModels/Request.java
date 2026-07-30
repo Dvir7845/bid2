@@ -4,12 +4,15 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a request to the server.
+ */
 public class Request implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Action action;
-    private Map<String, Object> data;
-    private Map<String, byte[]> files;
+    private final Action action;
+    private final Map<String, Object> data;
+    private final Map<String, byte[]> files;
 
     public Request(Action action) {
         this.action = action;

@@ -1,8 +1,6 @@
 package com.example.tobid.Activities;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,12 +8,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-
 import com.example.tobid.R;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
+/**
+ * The ForgotPasswordPage activity allows users to reset their password by sending a password reset email..
+ */
 public class ForgotPasswordActivity extends AppCompatActivity implements View.OnClickListener{
 
     // UI components
@@ -54,21 +52,18 @@ public class ForgotPasswordActivity extends AppCompatActivity implements View.On
 
                 // Send a password reset email using Firebase Authentication
                 auth.sendPasswordResetEmail(email)
-                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                if (task.isSuccessful()) {
-                                    // If the email is sent successfully, display a success message
-                                    Log.d("ForgotPassword", "Email sent.");
-                                    tvNotes.setText("Email sent. Please check your email to resume");
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                // If the email is sent successfully, display a success message
+                                Log.d("ForgotPassword", "Email sent.");
+                                tvNotes.setText("Email sent. Please check your email to resume");
 
-                                    // Change the button text to "Go to login screen" after the email is sent
-                                    btnChangePassword.setText("Go to login screen");
+                                // Change the button text to "Go to login screen" after the email is sent
+                                btnChangePassword.setText("Go to login screen");
 
-                                } else {
-                                    // If the email was incorrect, display an error message
-                                    tvNotes.setText("Email incorrect. Please re-enter your email");
-                                }
+                            } else {
+                                // If the email was incorrect, display an error message
+                                tvNotes.setText("Email incorrect. Please re-enter your email");
                             }
                         });
             } else {

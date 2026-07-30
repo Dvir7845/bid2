@@ -32,14 +32,11 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.NotificationViewHolder> {
 
     // List of Notifications to be displayed
-    private ArrayList<Notification> notifications;
+    private final ArrayList<Notification> notifications;
     private View.OnClickListener mOnClickListener;
-    // Context for resource access
-    private Context context;
 
-    public NotificationAdapter(ArrayList<Notification> notifications, Context context) {
+    public NotificationAdapter(ArrayList<Notification> notifications) {
         this.notifications = notifications;
-        this.context = context;
     }
 
     /**

@@ -31,7 +31,7 @@ import java.util.ArrayList;
 public class BidAdapter extends RecyclerView.Adapter<BidAdapter.BidViewHolder> {
 
     // List of bids to be displayed
-    private ArrayList<Bid> bids;
+    private final ArrayList<Bid> bids;
     // Click listener for handling item click events
     private View.OnClickListener mOnClickListener;
 

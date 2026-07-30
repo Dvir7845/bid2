@@ -1,5 +1,8 @@
 package com.example.tobid.DataModels;
 
+/**
+ * Enum representing different notification types.
+ */
 public enum NotificationType {
     SIGNUP,
     BID_CREATED,

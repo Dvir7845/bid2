@@ -25,6 +25,9 @@ import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 
+/**
+ * Activity for displaying and managing user notifications.
+ */
 public class NotificationsActivity extends AppCompatActivity implements View.OnClickListener {
     private FirebaseAuth mAuth;
     // Adapter for managing notifications
@@ -54,7 +57,7 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
         rvNotifications = findViewById(R.id.rvNotifications);
         rvNotifications.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
 
-        notificationAdapter = new NotificationAdapter(notifications, this);
+        notificationAdapter = new NotificationAdapter(notifications);
         rvNotifications.setAdapter(notificationAdapter);
 
         // Fetch notifications from the server
@@ -125,7 +128,7 @@ public class NotificationsActivity extends AppCompatActivity implements View.OnC
 
                 ServerConnection server = ServerConnection.getInstance();
                 Request request;
-
+                // Handle different notification types
                 switch (notificationType) {
                     case SIGNUP:  // Send a remove notification request and go to main page
                         break;

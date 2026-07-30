@@ -34,6 +34,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Activity for displaying a single bid.
+ */
 public class DisplayBidActivity extends AppCompatActivity implements View.OnClickListener{
     private TextView tvItemName, tvCategory, tvCurrentPrice, tvTimer, tvDetails ,tvSellerPhone;
     private EditText etBidAmount;
@@ -72,10 +75,9 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         }
 
         Item item = bid.getItem();
-
         saleId = bid.getBidId();
         saleCategory = item.getCategory();
-
+        // Set bid data to views
         tvItemName.setText(bid.getItem().getItemName());
         tvCategory.setText(bid.getItem().getCategory());
         tvDetails.setText(bid.getItem().getItemDescription());
@@ -84,11 +86,11 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
 
         // Load images
         ServerConnection server = ServerConnection.getInstance();
-
+        // Send requests for image URLs
         sendRequestForImageAndDisplay(server, item.getStoragePathToImg1(), imageView1); // Get image 1
         sendRequestForImageAndDisplay(server, item.getStoragePathToImg2(), imageView2); // Get image 2
         sendRequestForImageAndDisplay(server, item.getStoragePathToImg3(), imageView3); // Get image 3
-
+        // Set buy now button visibility
         if (bid.isHasMaximumPrice()) {
             btnBuy.setVisibility(View.VISIBLE);
             btnBuy.setText("BUY IT NOW FOR $" + bid.getMaximumPrice());
@@ -100,7 +102,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         if(mAuth.getUid().equals(bid.getItem().getSellerUID())){
             tvDetails.setText("This is your auction. You cannot place bids on your own items.");
             tvDetails.setVisibility(View.VISIBLE);
-           disableBidding();
+           disableBidding();//disable bidding buttons
         }
 
         // Check if the bid is expired
@@ -121,7 +123,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
             Date startDate = dateFormat.parse(bid.getStartDate());
 
             if (startDate != null && currentTime < startDate.getTime()) {
-             disableBidding();
+             disableBidding();//disable bidding buttons to prevent bidding before the start date
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -131,11 +133,11 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         String currentUid = mAuth.getUid();
         if ((isExpired || (bid.getHighestOfferedBid() >= bid.getMaximumPrice()) && currentUid != null)) {
             if (currentUid.equals(bid.getItem().getSellerUID()) || currentUid.equals(bid.getLeadingBidderId())) {
-                fetchAndShowSellerPhone();
+                fetchAndShowSellerPhone();//show seller phone to contact seller
             }
         }
 
-        startCountdown(bid.getEndDate());
+        startCountdown(bid.getEndDate());// Start the countdown timer
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -178,7 +180,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         });
     }
 
-    private void initViews() {
+    private void initViews() { // Initialize views
         tvItemName = findViewById(R.id.tvItemName);
         tvCategory = findViewById(R.id.tvCategory);
         tvCurrentPrice = findViewById(R.id.tvCurrentPrice);
@@ -203,7 +205,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         ibBiddingHistory.setOnClickListener(this);
     }
 
-    private void startCountdown(String endDateStr) {
+    private void startCountdown(String endDateStr) {// Start the countdown timer
         SimpleDateFormat dateFormat = new SimpleDateFormat("d-M-yyyy", Locale.getDefault());
         try {
             Date endDate = dateFormat.parse(endDateStr);
@@ -245,7 +247,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
         }
     }
 
-    private void disableBidding() {
+    private void disableBidding() {//for end of time ,buy now and the creator of the bid
         btnBid.setEnabled(false);
         btnAuto.setEnabled(false);
         btnBuy.setEnabled(false);
@@ -379,7 +381,7 @@ public class DisplayBidActivity extends AppCompatActivity implements View.OnClic
     }
 
 
-    private void fetchAndShowSellerPhone() {
+    private void fetchAndShowSellerPhone() {//get seller phone number to contact seller
         String sellerUid = bid.getItem().getSellerUID();
 
 

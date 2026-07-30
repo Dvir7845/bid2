@@ -1,16 +1,12 @@
 package com.example.tobid.Activities;
 
-import static android.content.ContentValues.TAG;
-
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -19,30 +15,27 @@ import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.tobid.DataModels.Action;
 import com.example.tobid.DataModels.Bid;
 import com.example.tobid.DataModels.Item;
 import com.example.tobid.DataModels.Request;
-import com.example.tobid.DataModels.Response;
-import com.example.tobid.ServerCommunicationClasses.ServerCallback;
 import com.example.tobid.ServerCommunicationClasses.ServerConnection;
 import com.example.tobid.R;
 import com.google.firebase.auth.FirebaseAuth;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+/**
+ * Activity for creating a new bid.
+ */
 public class CreateBidActivity extends AppCompatActivity implements View.OnClickListener {
     private static final int PICK_IMAGES_REQUEST = 1;
-    private ArrayList<Uri> imageUris = new ArrayList<>();
+    private final ArrayList<Uri> imageUris = new ArrayList<>();
     private FirebaseAuth mAuth;
 
     private ImageButton ibHomeButton, ibNotifications, ibBiddingHistory;
@@ -84,14 +77,11 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
         layoutMaximumPriceSection = findViewById(R.id.layoutMaximumPriceSection);
         layoutMaximumPriceSection.setVisibility(View.GONE);
         swIsMaximumPrice = findViewById(R.id.swIsMaximumPrice);
-        swIsMaximumPrice.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(@NonNull CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    layoutMaximumPriceSection.setVisibility(View.VISIBLE);
-                } else {
-                    layoutMaximumPriceSection.setVisibility(View.GONE);
-                }
+        swIsMaximumPrice.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                layoutMaximumPriceSection.setVisibility(View.VISIBLE);
+            } else {
+                layoutMaximumPriceSection.setVisibility(View.GONE);
             }
         });
 
@@ -120,26 +110,18 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
         ServerConnection server = ServerConnection.getInstance();
         Request request = new Request(Action.GET_CATEGORIES);
 
-        server.sendRequest(request, new ServerCallback() {
-            @Override
-            public void onResponseReceived(Response response) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (response != null && response.isSuccess()) {
-                            ArrayList<String> categories = (ArrayList<String>) response.getData("categories");
+        server.sendRequest(request, response -> runOnUiThread(() -> {
+            if (response != null && response.isSuccess()) {
+                ArrayList<String> categories = (ArrayList<String>) response.getData("categories");
 
-                            ArrayAdapter<String> spinnerAdapter =
-                                    new ArrayAdapter<>(CreateBidActivity.this, android.R.layout.simple_spinner_item, categories);
-                            spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-                            spCategory.setAdapter(spinnerAdapter);
-                        } else {
-                            Toast.makeText(CreateBidActivity.this, "Category fetch failed", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+                ArrayAdapter<String> spinnerAdapter =
+                        new ArrayAdapter<>(CreateBidActivity.this, android.R.layout.simple_spinner_item, categories);
+                spinnerAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+                spCategory.setAdapter(spinnerAdapter);
+            } else {
+                Toast.makeText(CreateBidActivity.this, "Category fetch failed", Toast.LENGTH_SHORT).show();
             }
-        });
+        }));
     }
 
     @Override
@@ -257,25 +239,19 @@ public class CreateBidActivity extends AppCompatActivity implements View.OnClick
 
             // Send request to server
             ServerConnection server = ServerConnection.getInstance();
-            server.sendRequest(request, new ServerCallback() {
-                @Override
-                public void onResponseReceived(Response response) {
-                    // When response is received update ui
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (response != null && response.isSuccess()) {
-                                // Go to bid detail page
-                                Intent i = new Intent(CreateBidActivity.this, DisplayBidActivity.class);
-                                i.putExtra("Bid", bid);
-                                startActivity(i);
-                            }
-                            else {
-                                Toast.makeText(CreateBidActivity.this, "Server side error, couldn't create bid. Please try again later", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-                }
+            server.sendRequest(request, response -> {
+                // When response is received update ui
+                runOnUiThread(() -> {
+                    if (response != null && response.isSuccess()) {
+                        // Go to bid detail page
+                        Intent i = new Intent(CreateBidActivity.this, DisplayBidActivity.class);
+                        i.putExtra("Bid", bid);
+                        startActivity(i);
+                    }
+                    else {
+                        Toast.makeText(CreateBidActivity.this, "Server side error, couldn't create bid. Please try again later", Toast.LENGTH_SHORT).show();
+                    }
+                });
             });
         }
     }

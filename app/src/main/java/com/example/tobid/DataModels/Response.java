@@ -4,10 +4,13 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a response from the server.
+ */
 public class Response implements Serializable {
     private boolean success;
     private String message;
-    private Map<String, Object> data;
+    private final Map<String, Object> data;
 
 
 
