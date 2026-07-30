@@ -10,7 +10,7 @@ import java.net.Socket;
 public class ServerConnection {
 
     //private static final String SERVER_IP = "10.0.2.2"; // ip for simulator
-    private static final String SERVER_IP ="136.113.101.144"; // cloud's IPS
+    private static final String SERVER_IP ="136.113.101.144"; //  cloud's IPS
     //private static final String SERVER_IP = "192.168.1.242"; // Yaniv's ip
     //private static final String SERVER_IP = "10.0.0.8" ; // Dvir home
     //private static final String SERVER_IP = "10.83.85.72" ; // Dvir hotspot
