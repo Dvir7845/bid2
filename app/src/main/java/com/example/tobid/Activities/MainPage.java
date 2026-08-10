@@ -325,9 +325,8 @@ public class MainPage extends AppCompatActivity implements View.OnClickListener 
             startActivity(i);
         }
         else if (v == ibHomeButton) { //only refresh the page
-            Intent i = new Intent(this, MainPage.class);
-            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(i);
+                Toast.makeText(this, "Refreshed", Toast.LENGTH_SHORT).show();
+                recreate();
         }
         else if (v == ibNotifications) {
             Intent i = new Intent(this, NotificationsActivity.class);
